@@ -8,3 +8,5 @@ i loop unrolling + B register blocking - 6.58 GFlops
 
 altered to jik loop w/ minor k loop unrolling - 7.41226 GFlops
 all loops unrolled to += 4 - 10.5316 GFLops
+
+---- swapped to jik loop, all loops unrolled += 4 7/22 ----
