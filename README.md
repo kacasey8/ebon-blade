@@ -1,7 +1,8 @@
 ebon-blade
 ==========
 
-cs61c project2!
+CS61C Project 2!
+Matrix Multiply
 
 Berkeley, Summer 2013
 
