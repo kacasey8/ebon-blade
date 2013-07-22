@@ -1,2 +1,2 @@
-cs61c-, Kevin Casey
+cs61c-bg, Kevin Casey
 cs61c-bv, William Huang
