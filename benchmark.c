@@ -17,8 +17,8 @@ int main( int argc, char **argv )
 {
   srand(time(NULL));
 
-	for( int n = 36; n < 37; n = n+1+n/3 )
-	{
+  for( int n = 36; n < 37; n = n+1+n/3 )
+  {
   /* Try different m */
   for( int m = 36; m < 37; m = m+1+m/3 )
   {
@@ -36,13 +36,13 @@ int main( int argc, char **argv )
     for( int n_iterations = 1; seconds < 0.1; n_iterations *= 2 ) 
     {
       /* warm-up */
-	sgemm( m, n, A, B, C );
+      sgemm( m, n, A, B, C );
       
       /* measure time */
       struct timeval start, end;
       gettimeofday( &start, NULL );
       for( int i = 0; i < n_iterations; i++ )
-	  sgemm( m,n, A, B, C );
+        sgemm( m,n, A, B, C );
       gettimeofday( &end, NULL );
       seconds = (end.tv_sec - start.tv_sec) + 1.0e-6 * (end.tv_usec - start.tv_usec);
       
@@ -53,7 +53,7 @@ int main( int argc, char **argv )
     printf( "%d by %d matrix \t %g Gflop/s\n", m, n, Gflop_s );
     
     /* Ensure that error does not exceed the theoretical error bound */
-		
+    
     /* Set initial C to 0 and do matrix multiply of A*B */
     memset( C, 0, sizeof( float ) * m * m );
     sgemm( m,n, A, B, C );
@@ -70,8 +70,8 @@ int main( int argc, char **argv )
     /* After this test if any element in C is still positive something went wrong in square_sgemm */
     for( int i = 0; i < m * m; i++ )
       if( C[i] > 0 ) {
-	printf( "FAILURE: error in matrix multiply exceeds an acceptable margin\n" );
-	return -1;
+        printf( "FAILURE: error in matrix multiply exceeds an acceptable margin\n" );
+        return -1;
       }
 
     /* release memory */
@@ -79,6 +79,6 @@ int main( int argc, char **argv )
     free( B );
     free( A );
   }
-	}  
+  }  
   return 0;
 }

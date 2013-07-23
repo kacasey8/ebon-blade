@@ -9,7 +9,7 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
   int m_a4 = m_a/4*4;
   int n_a4 = n_a/4*4;
   if (m_a4 == m_a && n_a4 == n_a) {
-    for( int j = 0; j < m_a; j += 4 ) {
+    for( int j = 0; j < m_a4; j += 4 ) {
       for( int i = 0; i < m_a4; i += 4 ) {
         tempC1 = _mm_loadu_ps(C+i+j*m_a); // load C[i+j*m_a], C[i+1+j*m_a], etc.
         tempC2 = _mm_loadu_ps(C+i+(j+1)*m_a);
@@ -26,6 +26,17 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
           tempB3 = _mm_load1_ps(B+j+(k+2)*m_a); 
           tempB4 = _mm_load1_ps(B+j+(k+3)*m_a); 
 
+          /*tempC1 = 
+          _mm_add_ps(
+            tempC1, 
+            _mm_add_ps(
+              _mm_mul_ps(tempA1, tempB1), 
+              _mm_add_ps(
+                _mm_mul_ps(tempA2, tempB2),
+                _mm_add_ps(
+                  _mm_mul_ps(tempA3, tempB3), 
+                  _mm_mul_ps(tempA4, tempB4)))));*/
+
           tempC1 = _mm_add_ps(tempC1, _mm_mul_ps(tempA1, tempB1));
           tempC1 = _mm_add_ps(tempC1, _mm_mul_ps(tempA2, tempB2));
           tempC1 = _mm_add_ps(tempC1, _mm_mul_ps(tempA3, tempB3));
@@ -35,6 +46,17 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
           tempB2 = _mm_load1_ps(B+j+1+(k+1)*m_a); 
           tempB3 = _mm_load1_ps(B+j+1+(k+2)*m_a); 
           tempB4 = _mm_load1_ps(B+j+1+(k+3)*m_a); 
+
+          /*tempC2 = 
+          _mm_add_ps(
+            tempC2, 
+            _mm_add_ps(
+              _mm_mul_ps(tempA1, tempB1), 
+              _mm_add_ps(
+                _mm_mul_ps(tempA2, tempB2),
+                _mm_add_ps(
+                  _mm_mul_ps(tempA3, tempB3), 
+                  _mm_mul_ps(tempA4, tempB4)))));*/
 
           tempC2 = _mm_add_ps(tempC2, _mm_mul_ps(tempA1, tempB1));
           tempC2 = _mm_add_ps(tempC2, _mm_mul_ps(tempA2, tempB2));
@@ -46,15 +68,37 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
           tempB3 = _mm_load1_ps(B+j+2+(k+2)*m_a); 
           tempB4 = _mm_load1_ps(B+j+2+(k+3)*m_a); 
 
-          tempC3 = _mm_add_ps(tempC3, _mm_mul_ps(tempA1, tempB1));
+          tempC3 = 
+          _mm_add_ps(
+            tempC3, 
+            _mm_add_ps(
+              _mm_mul_ps(tempA1, tempB1), 
+              _mm_add_ps(
+                _mm_mul_ps(tempA2, tempB2),
+                _mm_add_ps(
+                  _mm_mul_ps(tempA3, tempB3), 
+                  _mm_mul_ps(tempA4, tempB4)))));
+
+          /*tempC3 = _mm_add_ps(tempC3, _mm_mul_ps(tempA1, tempB1));
           tempC3 = _mm_add_ps(tempC3, _mm_mul_ps(tempA2, tempB2));
           tempC3 = _mm_add_ps(tempC3, _mm_mul_ps(tempA3, tempB3));
-          tempC3 = _mm_add_ps(tempC3, _mm_mul_ps(tempA4, tempB4));
+          tempC3 = _mm_add_ps(tempC3, _mm_mul_ps(tempA4, tempB4));*/
 
           tempB1 = _mm_load1_ps(B+j+3+k*m_a);
           tempB2 = _mm_load1_ps(B+j+3+(k+1)*m_a); 
           tempB3 = _mm_load1_ps(B+j+3+(k+2)*m_a); 
           tempB4 = _mm_load1_ps(B+j+3+(k+3)*m_a); 
+
+          /*tempC4 = 
+          _mm_add_ps(
+            tempC4, 
+            _mm_add_ps(
+              _mm_mul_ps(tempA1, tempB1), 
+              _mm_add_ps(
+                _mm_mul_ps(tempA2, tempB2),
+                _mm_add_ps(
+                  _mm_mul_ps(tempA3, tempB3), 
+                  _mm_mul_ps(tempA4, tempB4)))));*/
 
           tempC4 = _mm_add_ps(tempC4, _mm_mul_ps(tempA1, tempB1));
           tempC4 = _mm_add_ps(tempC4, _mm_mul_ps(tempA2, tempB2));
@@ -84,7 +128,6 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
       }
     }
   } else {
-    printf("Else case\n");
     for( int k = 0; k < n_a; k++ ) {
       for( int j = 0; j < m_a; j++ ) {
         tempB = _mm_load1_ps(B+j+k*m_a); // load B[j + k*m_a] into all 4
