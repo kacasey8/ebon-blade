@@ -14,3 +14,9 @@ all loops unrolled to += 4 - 10.5316 GFLops
 discovered a hack changing tempC3 - 11.5 GFlops
 
 ---- benchmark.txt update 7/22 -----
+
+albert hints - can get assembly file, some weird command maybe a -s flag
+			- learning capacity limited from capping part 1
+			- possible -0 compile will normalize results
+			- load1 converts to native instructions which can be better optimized
+			- 

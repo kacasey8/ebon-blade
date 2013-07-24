@@ -21,7 +21,7 @@ LIBS = -lpthread
 # a pretty good flag selection for this machine...
 CFLAGS = -msse4 -fopenmp -O3 -pipe -fno-omit-frame-pointer
 
-all:	bench-naive bench-small bench-openmp
+all:	bench-naive bench-small bench-openmp bench-tester
 
 # triple nested loop implementation
 bench-naive: benchmark.o sgemm-naive.o
@@ -29,7 +29,7 @@ bench-naive: benchmark.o sgemm-naive.o
 
 # your implementation for part 1
 bench-small: benchmark.o sgemm-small.o
-	$(CC) -o $@ $(LIBS) benchmark.o sgemm-small.o $(GOTOLIB)
+	$(CC) -o $@ $(LIBS) benchmark.o sgemm-small.o $(GOTOLIB)	
 # your implementation for part 2
 bench-openmp: benchmark.o sgemm-openmp.o
 	$(CC) -o $@ $(LIBS) $(OMP) benchmark.o sgemm-openmp.o $(GOTOLIB)
