@@ -19,4 +19,5 @@ albert hints - can get assembly file, some weird command maybe a -s flag
 			- learning capacity limited from capping part 1
 			- possible -0 compile will normalize results
 			- load1 converts to native instructions which can be better optimized
-			- 
+
+---- cleaned up some code 7/24 ----
