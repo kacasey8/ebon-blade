@@ -17,10 +17,10 @@ int main( int argc, char **argv )
 {
   srand(time(NULL));
 
-  for( int n = 38; n < 39; n = n+1 )
+  for( int n = 32; n < 33; n = n+1 )
   {
   /* Try different m */
-  for( int m = 35; m < 36; m = m+1 )
+  for( int m = 1000; m < 1001; m = m+1 )
   {
     /* Allocate and fill 2 random matrices A, C */
     float *A = (float*) malloc( m * n * sizeof(float) );

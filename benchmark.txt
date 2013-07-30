@@ -21,3 +21,8 @@ albert hints - can get assembly file, some weird command maybe a -s flag
 			- load1 converts to native instructions which can be better optimized
 
 ---- cleaned up some code 7/24 ----
+
+Part 2
+
+added cache blocking, block size of 64 - average 40 GFlops
+---- cache blocking of 64 implemented 7/29 ----
