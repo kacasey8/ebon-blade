@@ -23,11 +23,11 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
     n_diff = n_a4 - n_a;
   }
 
-  if( m_diff || n_diff ){
+  if( !m_diff || n_diff ){
     a = calloc(m_a4*n_a4, sizeof(float));
     b = calloc(m_a4*n_a4, sizeof(float));
     if( m_diff ){ // c only needs to be padded if m_a isn't a multiple of 4
-      c = calloc(m_a4*m_a4, sizeof(float));
+      c = malloc(m_a4*m_a4*sizeof(float));
     }else {
       c = C;
     }
@@ -46,51 +46,68 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
 
   int blocksize = 64;
 
+  // z, e, y, d
+  // j, b, bsel
+  // j0, j1, j2, j3
+  // i, a, ai, c, ci
+  // k, k0, k2
+  // n_a4, m_a4
+
   #pragma omp parallel for
   for( int z = 0; z < m_a4; z += blocksize) {
+    int e = MIN(m_a4, z+blocksize);
     __m128 tempA1, tempA2, tempA3, tempA4;
     __m128 tempB1, tempB2, tempB3, tempB4;
     __m128 tempC1, tempC2, tempC3, tempC4;
     for(int y = 0; y < m_a4; y += blocksize) {
       int d = MIN(m_a4, y+blocksize);
-      int e = MIN(m_a4, z+blocksize);
       for( int j = y; j < d; j += 4 ) {
+        float *bsel = b + j;
+        int j0 = j*m_a4;
+        int j1 = j0 + m_a4;
+        int j2 = j1 + m_a4;
+        int j3 = j2 + m_a4;
         for( int i = z; i < e; i += 4 ) {
+          float *ai = a + i;
+
           tempC1 = _mm_setzero_ps(); // C values begin at 0 anways, so there is no use in loading
           tempC2 = _mm_setzero_ps(); // from C.
           tempC3 = _mm_setzero_ps();
           tempC4 = _mm_setzero_ps();
 
           for( int k = 0; k < n_a4; k += 4 ) {
-            tempA1 = _mm_loadu_ps(a+i+k*m_a4); // load the 16 values for A we will be using in this loop
-            tempA2 = _mm_loadu_ps(a+i+(k+1)*m_a4);
-            tempA3 = _mm_loadu_ps(a+i+(k+2)*m_a4);
-            tempA4 = _mm_loadu_ps(a+i+(k+3)*m_a4);
+            int k0 = k*m_a4;
+            int k2 = k0 + m_a4 + m_a4;
 
-            tempB1 = _mm_load1_ps(b+j+k*m_a4); // load 4 B values [1, 1, 1, 1]
-            tempB2 = _mm_load1_ps(b+j+(k+1)*m_a4); // [5, 5, 5, 5]
-            tempB3 = _mm_load1_ps(b+j+(k+2)*m_a4); // [9, 9, 9, 9]
-            tempB4 = _mm_load1_ps(b+j+(k+3)*m_a4); // [13, 13, 13, 13]
+            tempA1 = _mm_loadu_ps(ai+k0); // load the 16 values for A we will be using in this loop
+            tempA2 = _mm_loadu_ps(ai+k0+m_a4);
+            tempA3 = _mm_loadu_ps(ai+k2);
+            tempA4 = _mm_loadu_ps(ai+k2+m_a4);
+
+            tempB1 = _mm_load1_ps(bsel+k0); // load 4 B values [1, 1, 1, 1]
+            tempB2 = _mm_load1_ps(bsel+k0+m_a4); // [5, 5, 5, 5]
+            tempB3 = _mm_load1_ps(bsel+k2); // [9, 9, 9, 9]
+            tempB4 = _mm_load1_ps(bsel+k2+m_a4); // [13, 13, 13, 13]
 
             tempC1 += _mm_mul_ps(tempA1, tempB1); // use the 16 A values, 4 B values
             tempC1 += _mm_mul_ps(tempA2, tempB2);
             tempC1 += _mm_mul_ps(tempA3, tempB3);
             tempC1 += _mm_mul_ps(tempA4, tempB4);
 
-            tempB1 = _mm_load1_ps(b+j+1+k*m_a4); // load 4 new B values [2, 2, 2, 2]
-            tempB2 = _mm_load1_ps(b+j+1+(k+1)*m_a4); // [6, 6, 6, 6]
-            tempB3 = _mm_load1_ps(b+j+1+(k+2)*m_a4); // [10, 10, 10, 10]
-            tempB4 = _mm_load1_ps(b+j+1+(k+3)*m_a4); // [14, 14, 14, 14]
+            tempB1 = _mm_load1_ps(bsel+1+k0); // load 4 new B values [2, 2, 2, 2]
+            tempB2 = _mm_load1_ps(bsel+1+k0+m_a4); // [6, 6, 6, 6]
+            tempB3 = _mm_load1_ps(bsel+1+k2); // [10, 10, 10, 10]
+            tempB4 = _mm_load1_ps(bsel+1+k2+m_a4); // [14, 14, 14, 14]
 
             tempC2 += _mm_mul_ps(tempA1, tempB1);
             tempC2 += _mm_mul_ps(tempA2, tempB2);
             tempC2 += _mm_mul_ps(tempA3, tempB3);
             tempC2 += _mm_mul_ps(tempA4, tempB4);
 
-            tempB1 = _mm_load1_ps(b+j+2+k*m_a4); // load 4 new B values [3, 3, 3, 3]
-            tempB2 = _mm_load1_ps(b+j+2+(k+1)*m_a4); // [7, 7, 7, 7]
-            tempB3 = _mm_load1_ps(b+j+2+(k+2)*m_a4); // [11, 11, 11, 11]
-            tempB4 = _mm_load1_ps(b+j+2+(k+3)*m_a4); // ]15, 15, 15, 15]
+            tempB1 = _mm_load1_ps(bsel+2+k0); // load 4 new B values [3, 3, 3, 3]
+            tempB2 = _mm_load1_ps(bsel+2+k0+m_a4); // [7, 7, 7, 7]
+            tempB3 = _mm_load1_ps(bsel+2+k2); // [11, 11, 11, 11]
+            tempB4 = _mm_load1_ps(bsel+2+k2+m_a4); // ]15, 15, 15, 15]
 
             /*tempC3 += _mm_mul_ps(tempA1, tempB1);
             tempC3 += _mm_mul_ps(tempA2, tempB2);
@@ -108,20 +125,23 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
                     _mm_mul_ps(tempA3, tempB3),
                     _mm_mul_ps(tempA4, tempB4)))));
 
-            tempB1 = _mm_load1_ps(b+j+3+k*m_a4); // load 4 new B values [4, 4, 4, 4]
-            tempB2 = _mm_load1_ps(b+j+3+(k+1)*m_a4); // [8, 8, 8, 8]
-            tempB3 = _mm_load1_ps(b+j+3+(k+2)*m_a4); // [12, 12, 12, 12]
-            tempB4 = _mm_load1_ps(b+j+3+(k+3)*m_a4); // [16, 16, 16, 16]
+            tempB1 = _mm_load1_ps(bsel+3+k0); // load 4 new B values [4, 4, 4, 4]
+            tempB2 = _mm_load1_ps(bsel+3+k0+m_a4); // [8, 8, 8, 8]
+            tempB3 = _mm_load1_ps(bsel+3+k2); // [12, 12, 12, 12]
+            tempB4 = _mm_load1_ps(bsel+3+k2+m_a4); // [16, 16, 16, 16]
 
             tempC4 += _mm_mul_ps(tempA1, tempB1);
             tempC4 += _mm_mul_ps(tempA2, tempB2);
             tempC4 += _mm_mul_ps(tempA3, tempB3);
             tempC4 += _mm_mul_ps(tempA4, tempB4);
           }
-          _mm_storeu_ps(c+i+j*m_a4, tempC1); // stores back the 16 C values we calculated in the above loop
-          _mm_storeu_ps(c+i+(j+1)*m_a4, tempC2);
-          _mm_storeu_ps(c+i+(j+2)*m_a4, tempC3);
-          _mm_storeu_ps(c+i+(j+3)*m_a4, tempC4);
+
+          float *ci = c + i;
+
+          _mm_storeu_ps(ci+j0, tempC1); // stores back the 16 C values we calculated in the above loop
+          _mm_storeu_ps(ci+j1, tempC2);
+          _mm_storeu_ps(ci+j2, tempC3);
+          _mm_storeu_ps(ci+j3, tempC4);
         }
       }
     }

@@ -33,7 +33,7 @@ int main( int argc, char **argv )
     
     /* measure Gflop/s rate; time a sufficiently long sequence of calls to eliminate noise */
     double Gflop_s, seconds = -1.0;
-    for( int n_iterations = 1; seconds < 0.1; n_iterations *= 2 ) 
+    for( int n_iterations = 1; seconds < 5; n_iterations *= 2 ) 
     {
       /* warm-up */
       sgemm( m, n, A, B, C );

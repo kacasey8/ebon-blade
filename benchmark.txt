@@ -25,4 +25,10 @@ albert hints - can get assembly file, some weird command maybe a -s flag
 Part 2
 
 added cache blocking, block size of 64 - average 40 GFlops
+
 ---- cache blocking of 64 implemented 7/29 ----
+
+int register blocking
+number of multiplications heavily reduced - average ~ 45 GFlops
+
+--- int register blocking ---
