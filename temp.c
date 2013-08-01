@@ -23,7 +23,7 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
     n_diff = n_a4 - n_a;
   }
 
-  if( !m_diff || n_diff ){
+  if( m_diff || n_diff ){
     a = calloc(m_a4*n_a4, sizeof(float));
     b = calloc(m_a4*n_a4, sizeof(float));
     if( m_diff ){ // c only needs to be padded if m_a isn't a multiple of 4
