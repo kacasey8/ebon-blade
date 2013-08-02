@@ -12,19 +12,22 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
   c = C;
 
   int m_a4 = m_a/4*4;
+  int m_a16 = m_a/16*16;
+  int m_a32 = m_a/32*32;
+//  int m_a64 = m_a/64*64;
 
   // e, y
   // j, b, bsel
   // j0, j1, j2, j3
   // i, a, ai, c, ci
   // k, k0, k2
-  // n_a4, m_a4
+  // n_a, m_a4, m_a32
 
   int blocksize = 64;
 
   #pragma omp parallel for
-  for( int y = 0; y < m_a4; y += blocksize) {
-    int e = MIN(m_a4, y+blocksize);
+  for( int y = 0; y < m_a; y += blocksize) {
+    int e = MIN(m_a32, y+blocksize);
     __m128 tempA1, tempA2, tempA3, tempA4;
     __m128 tempA5, tempA6, tempA7, tempA8;
     __m128 tempB1;
@@ -60,24 +63,24 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
     __m128 tempC5i8, tempC6i8, tempC7i8, tempC8i8;
     __m128 tempC9i8, tempC10i8, tempC11i8, tempC12i8;
     __m128 tempC13i8, tempC14i8, tempC15i8, tempC16i8;
-    for(int j = 0; j < m_a4; j += 16) {
+    for(int j = 0; j < m_a16; j += 16) {
       float *bsel = b + j;
-      int j1 = j*m_a4;
-      int j2 = j1 + m_a4;
-      int j3 = j2 + m_a4;
-      int j4 = j3 + m_a4;
-      int j5 = j4 + m_a4;
-      int j6 = j5 + m_a4;
-      int j7 = j6 + m_a4;
-      int j8 = j7 + m_a4;
-      int j9 = j8 + m_a4;
-      int j10 = j9 + m_a4;
-      int j11 = j10 + m_a4;
-      int j12 = j11 + m_a4;
-      int j13 = j12 + m_a4;
-      int j14 = j13 + m_a4;
-      int j15 = j14 + m_a4;
-      int j16 = j15 + m_a4;
+      int j1 = j*m_a;
+      int j2 = j1 + m_a;
+      int j3 = j2 + m_a;
+      int j4 = j3 + m_a;
+      int j5 = j4 + m_a;
+      int j6 = j5 + m_a;
+      int j7 = j6 + m_a;
+      int j8 = j7 + m_a;
+      int j9 = j8 + m_a;
+      int j10 = j9 + m_a;
+      int j11 = j10 + m_a;
+      int j12 = j11 + m_a;
+      int j13 = j12 + m_a;
+      int j14 = j13 + m_a;
+      int j15 = j14 + m_a;
+      int j16 = j15 + m_a;
       for( int i = y; i < e; i += 32 ) {
         float *ai = a + i;
         float *ai4 = ai + 4;
@@ -206,7 +209,7 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
         tempC14i7 = _mm_setzero_ps(); 
         tempC15i7 = _mm_setzero_ps(); 
         tempC16i7 = _mm_setzero_ps(); 
-        
+
         tempC1i8 = _mm_setzero_ps(); 
         tempC2i8 = _mm_setzero_ps(); 
         tempC3i8 = _mm_setzero_ps(); 
@@ -225,7 +228,7 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
         tempC16i8 = _mm_setzero_ps(); 
 
         for( int k = 0; k < n_a; k++ ) {
-          int k0 = k*m_a4;
+          int k0 = k*m_a ;
 
           tempA1 = _mm_loadu_ps(ai+k0); 
           tempA2 = _mm_loadu_ps(ai4+k0); 
@@ -566,6 +569,259 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
         _mm_storeu_ps(ci+j15, tempC15i8);
         _mm_storeu_ps(ci+j16, tempC16i8);
       }
+
+      if(e == m_a32){
+        for( int i = m_a32; i < m_a4; i += 4){
+          float *ai = a+i;
+
+          tempC1i1 = _mm_setzero_ps(); // C values begin at 0 anways, so there is no use in loading
+          tempC2i1 = _mm_setzero_ps(); // from C.
+          tempC3i1 = _mm_setzero_ps();
+          tempC4i1 = _mm_setzero_ps();
+          tempC5i1 = _mm_setzero_ps();
+          tempC6i1 = _mm_setzero_ps();
+          tempC7i1 = _mm_setzero_ps();
+          tempC8i1 = _mm_setzero_ps();
+          tempC9i1 = _mm_setzero_ps();
+          tempC10i1 = _mm_setzero_ps();
+          tempC11i1 = _mm_setzero_ps();
+          tempC12i1 = _mm_setzero_ps();
+          tempC13i1 = _mm_setzero_ps();
+          tempC14i1 = _mm_setzero_ps();
+          tempC15i1 = _mm_setzero_ps();
+          tempC16i1 = _mm_setzero_ps();
+
+          for( int k = 0; k < n_a; k++){
+            int k0 = k*m_a;
+
+            tempA1 = _mm_loadu_ps(ai + k0);
+
+            tempB1 = _mm_load1_ps(bsel+k0);
+            tempC1i1 += _mm_mul_ps(tempA1, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+1+k0);
+            tempC2i1 += _mm_mul_ps(tempA1, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+2+k0);
+            tempC3i1 += _mm_mul_ps(tempA1, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+3+k0);
+            tempC4i1 += _mm_mul_ps(tempA1, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+4+k0);
+            tempC5i1 += _mm_mul_ps(tempA1, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+5+k0);
+            tempC6i1 += _mm_mul_ps(tempA1, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+6+k0);
+            tempC7i1 += _mm_mul_ps(tempA1, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+7+k0);
+            tempC8i1 += _mm_mul_ps(tempA1, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+8+k0);
+            tempC9i1 += _mm_mul_ps(tempA1, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+9+k0);
+            tempC10i1 += _mm_mul_ps(tempA1, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+10+k0);
+            tempC11i1 += _mm_mul_ps(tempA1, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+11+k0);
+            tempC12i1 += _mm_mul_ps(tempA1, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+12+k0);
+            tempC13i1 += _mm_mul_ps(tempA1, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+13+k0);
+            tempC14i1 += _mm_mul_ps(tempA1, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+14+k0);
+            tempC15i1 += _mm_mul_ps(tempA1, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+15+k0);
+            tempC16i1 += _mm_mul_ps(tempA1, tempB1);
+          }
+          float *ci = c+i;
+
+          _mm_storeu_ps(ci+j1, tempC1i1);
+          _mm_storeu_ps(ci+j2, tempC2i1);
+          _mm_storeu_ps(ci+j3, tempC3i1);
+          _mm_storeu_ps(ci+j4, tempC4i1);
+          _mm_storeu_ps(ci+j5, tempC5i1);
+          _mm_storeu_ps(ci+j6, tempC6i1);
+          _mm_storeu_ps(ci+j7, tempC7i1);
+          _mm_storeu_ps(ci+j8, tempC8i1);
+          _mm_storeu_ps(ci+j9, tempC9i1);
+          _mm_storeu_ps(ci+j10, tempC10i1);
+          _mm_storeu_ps(ci+j11, tempC11i1);
+          _mm_storeu_ps(ci+j12, tempC12i1);
+          _mm_storeu_ps(ci+j13, tempC13i1);
+          _mm_storeu_ps(ci+j14, tempC14i1);
+          _mm_storeu_ps(ci+j15, tempC15i1);
+          _mm_storeu_ps(ci+j16, tempC16i1);
+        }
+
+        for( int i = m_a4; i < m_a; i++ ) {
+          float *ai = a+i;
+
+          tempC1i1 = _mm_setzero_ps(); // C values begin at 0 anways, so there is no use in loading
+          tempC2i1 = _mm_setzero_ps(); // from C.
+          tempC3i1 = _mm_setzero_ps();
+          tempC4i1 = _mm_setzero_ps();
+
+          for( int k = 0; k < n_a; k++ ) {
+            int k0 = k*m_a;
+
+            tempA1 = _mm_load1_ps(ai + k0);
+
+            tempB1 = _mm_loadu_ps(bsel + k0);
+            tempC1i1 += _mm_mul_ps(tempA1, tempB1);
+
+            tempB1 = _mm_loadu_ps(bsel + 4 + k0);
+            tempC2i1 += _mm_mul_ps(tempA1, tempB1);
+
+            tempB1 = _mm_loadu_ps(bsel + 8 + k0);
+            tempC3i1 += _mm_mul_ps(tempA1, tempB1);
+
+            tempB1 = _mm_loadu_ps(bsel + 12 + k0);
+            tempC4i1 += _mm_mul_ps(tempA1, tempB1);
+
+          }
+          float *ci = c+i;
+
+          _mm_store_ss(ci+j1, tempC1i1);
+          tempC1i1 = _mm_shuffle_ps(tempC1i1, tempC1i1, 0x39);
+          _mm_store_ss(ci+j2, tempC1i1);
+          tempC1i1 = _mm_shuffle_ps(tempC1i1, tempC1i1, 0x39);
+          _mm_store_ss(ci+j3, tempC1i1);
+          tempC1i1 = _mm_shuffle_ps(tempC1i1, tempC1i1, 0x39);
+          _mm_store_ss(ci+j4, tempC1i1);
+
+          _mm_store_ss(ci+j5, tempC2i1);
+          tempC2i1 = _mm_shuffle_ps(tempC2i1, tempC2i1, 0x39);
+          _mm_store_ss(ci+j6, tempC2i1);
+          tempC2i1 = _mm_shuffle_ps(tempC2i1, tempC2i1, 0x39);
+          _mm_store_ss(ci+j7, tempC2i1);
+          tempC2i1 = _mm_shuffle_ps(tempC2i1, tempC2i1, 0x39);
+          _mm_store_ss(ci+j8, tempC2i1);
+
+          _mm_store_ss(ci+j9, tempC3i1);
+          tempC3i1 = _mm_shuffle_ps(tempC3i1, tempC3i1, 0x39);
+          _mm_store_ss(ci+j10, tempC3i1);
+          tempC3i1 = _mm_shuffle_ps(tempC3i1, tempC3i1, 0x39);
+          _mm_store_ss(ci+j11, tempC3i1);
+          tempC3i1 = _mm_shuffle_ps(tempC3i1, tempC3i1, 0x39);
+          _mm_store_ss(ci+j12, tempC3i1);
+
+          _mm_store_ss(ci+j13, tempC4i1);
+          tempC4i1 = _mm_shuffle_ps(tempC4i1, tempC4i1, 0x39);
+          _mm_store_ss(ci+j14, tempC4i1);
+          tempC4i1 = _mm_shuffle_ps(tempC4i1, tempC4i1, 0x39);
+          _mm_store_ss(ci+j15, tempC4i1);
+          tempC4i1 = _mm_shuffle_ps(tempC4i1, tempC4i1, 0x39);
+          _mm_store_ss(ci+j16, tempC4i1);
+        }
+      }
+    }
+  }
+  #pragma omp parallel for
+  for( int j = m_a16; j < m_a; j++) {
+    float *bsel = b+j;
+    int j1 = j*m_a;
+
+    __m128 tempA1, tempA2, tempA3, tempA4;
+    __m128 tempA5, tempA6, tempA7, tempA8;
+    __m128 tempB1;
+    __m128 tempC1i1, tempC2i1, tempC3i1, tempC4i1;
+    __m128 tempC5i1, tempC6i1, tempC7i1, tempC8i1;
+
+    for( int i = 0; i < m_a32; i += 32 ) {
+      float *ai = a+i;
+
+      tempC1i1 = _mm_setzero_ps(); // C values begin at 0 anways, so there is no use in loading
+      tempC2i1 = _mm_setzero_ps(); // from C.
+      tempC3i1 = _mm_setzero_ps();
+      tempC4i1 = _mm_setzero_ps();
+      tempC5i1 = _mm_setzero_ps();
+      tempC6i1 = _mm_setzero_ps();
+      tempC7i1 = _mm_setzero_ps();
+      tempC8i1 = _mm_setzero_ps();
+
+      for( int k = 0; k < n_a; k++ ) {
+        int k0 = k*m_a;
+        tempB1 = _mm_load1_ps(bsel+k0);
+        tempA1 = _mm_loadu_ps(ai+k0);
+        tempC1i1 += _mm_mul_ps(tempA1, tempB1);
+
+        tempA1 = _mm_loadu_ps(ai+4+k0);
+        tempC2i1 += _mm_mul_ps(tempA1, tempB1);
+
+        tempA1 = _mm_loadu_ps(ai+8+k0);
+        tempC3i1 += _mm_mul_ps(tempA1, tempB1);
+
+        tempA1 = _mm_loadu_ps(ai+12+k0);
+        tempC4i1 += _mm_mul_ps(tempA1, tempB1);
+
+        tempA1 = _mm_loadu_ps(ai+16+k0);
+        tempC5i1 += _mm_mul_ps(tempA1, tempB1);
+
+        tempA1 = _mm_loadu_ps(ai+20+k0);
+        tempC6i1 += _mm_mul_ps(tempA1, tempB1);
+
+        tempA1 = _mm_loadu_ps(ai+24+k0);
+        tempC7i1 += _mm_mul_ps(tempA1, tempB1);
+
+        tempA1 = _mm_loadu_ps(ai+28+k0);
+        tempC8i1 += _mm_mul_ps(tempA1, tempB1);
+
+      }
+      float *ci = c+i;
+
+      _mm_storeu_ps(ci+j1, tempC1i1);
+      _mm_storeu_ps(ci+4+j1, tempC2i1);
+      _mm_storeu_ps(ci+8+j1, tempC3i1);
+      _mm_storeu_ps(ci+12+j1, tempC4i1);
+      _mm_storeu_ps(ci+16+j1, tempC5i1);
+      _mm_storeu_ps(ci+20+j1, tempC6i1);
+      _mm_storeu_ps(ci+24+j1, tempC7i1);
+      _mm_storeu_ps(ci+28+j1, tempC8i1);
+    }
+    for( int i = m_a32; i < m_a4; i += 4) {
+      float *ai = a+i;
+
+      tempC1i1 = _mm_setzero_ps();
+      for( int k = 0; k < n_a; k++) {
+        int k0 = k*m_a;
+
+        tempA1 = _mm_loadu_ps(ai+k0);
+        tempB1 = _mm_load1_ps(bsel+k0);
+        tempC1i1 += _mm_mul_ps(tempA1, tempB1);
+      }
+      _mm_storeu_ps(c+i+j1, tempC1i1);
+    }
+    /*for( int i = m_a4; i < m_a; i++) {
+      float *ai = a+i;
+
+      tempC1i1 = _mm_setzero_ps();
+      for( int k = 0; k < n_a; k++) {
+        int k0 = k*m_a;
+
+        tempA1 = _mm_loadu_ps(ai+k0);
+        tempB1 = _mm_load1_ps(bsel+k0);
+        tempC1i1 += _mm_mul_ps(tempA1, tempB1);
+      }
+      _mm_store_ss(c+i+j1, tempC1i1);
+    }*/
+    float sum;
+    for( int i = m_a4; i < m_a; i++ ) {
+      sum = 0;
+      for( int k = 0; k < n_a; k++ ) {
+        sum += *(a+i+k*m_a) * *(b+j+k*m_a);
+      }
+      *(c+i+j*m_a) = sum;
     }
   }
 }
