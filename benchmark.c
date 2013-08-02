@@ -17,10 +17,10 @@ int main( int argc, char **argv )
 {
   srand(time(NULL));
 
-  for( int n = 32; n < 101; n = n+4 )
+  for( int n = 32; n < 101; n++ )
   {
   /* Try different m */
-  for( int m = 1000; m < 2000; m = m+4 )
+  for( int m = 1024; m < 10000; m = m+32 )
   {
     /* Allocate and fill 2 random matrices A, C */
     float *A = (float*) malloc( m * n * sizeof(float) );
@@ -31,9 +31,9 @@ int main( int argc, char **argv )
     for( int i = 0; i < n*m; i++ ) B[i] = 2 * drand48() - 1;
     for( int i = 0; i < m*m; i++ ) C[i] = 2 * drand48() - 1;
 
-    for( int i = 0; i < m*n; i++ ) A[i] = 0;
+    /*for( int i = 0; i < m*n; i++ ) A[i] = 0;
     for( int i = 0; i < n*m; i++ ) B[i] = 0;
-    for( int i = 0; i < m*m; i++ ) C[i] = 0;
+    for( int i = 0; i < m*m; i++ ) C[i] = 0;*/
     
     /* measure Gflop/s rate; time a sufficiently long sequence of calls to eliminate noise */
     double Gflop_s, seconds = -1.0;

@@ -32,3 +32,8 @@ int register blocking
 number of multiplications heavily reduced - average ~ 45 GFlops
 
 --- int register blocking ---
+
+k loop set to += 1, new loop unrolling technique involving J and K
+around 55 GFlop average, need a way to pad or fringe case.
+
+--- new loop unrolling, j - 16, i - 32 ----

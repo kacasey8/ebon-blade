@@ -28,10 +28,10 @@ int main( int argc, char **argv )
 	int n  = atoi(argv[2]);
 	
 	// Change these values to modify range checking
-	if(m < 1000 || m > 10000 || n < 32 || n > 10000)
+	if(m < 0 || m > 10000 || n < 32 || n > 10000)
 	{
-		printf("Dimensions provided are out of the range of matrices we will be testing!  Change tester.c to modify range checking.\n");
-		exit(0);
+		//printf("Dimensions provided are out of the range of matrices we will be testing!  Change tester.c to modify range checking.\n");
+		//exit(0);
 	}
 
 	/* Allocate and fill 2 random matrices A, C */
@@ -42,6 +42,10 @@ int main( int argc, char **argv )
 	for( int i = 0; i < m*n; i++ ) A[i] = 2 * drand48() - 1;
 	for( int i = 0; i < m*n; i++ ) B[i] = 2 * drand48() - 1;
 	for( int i = 0; i < m*m; i++ ) C[i] = 2 * drand48() - 1;
+
+	/*for( int i = 0; i < m*n; i++ ) A[i] = 0;
+	for( int i = 0; i < m*n; i++ ) B[i] = 0;
+	for( int i = 0; i < m*m; i++ ) C[i] = 0;*/
 	
 	/* measure Gflop/s rate; time a sufficiently long sequence of calls to eliminate noise */
 	double Gflop_s, seconds = -1.0;

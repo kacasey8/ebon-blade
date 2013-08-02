@@ -7,11 +7,39 @@
 void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
 
   float *a, *b, *c;
-  a = A;
-  b = B;
-  c = C;
 
-  int m_a4 = m_a/4*4;
+  int m_a4 = m_a/4*4, m_diff = 0; 
+  int n_a4 = n_a/4*4, n_diff = 0;
+
+  if( m_a4 != m_a ){ // if matrices need padding, m_a4 and n_a4 become the
+    m_a4 += 4;       // lowest multiple of 4 greater than m_a and n_a
+    m_diff = m_a4 - m_a;
+  }
+  if( n_a4 != n_a ){
+    n_a4 += 4;
+    n_diff = n_a4 - n_a;
+  }
+
+  if( m_diff || n_diff ){
+    a = calloc(m_a4*n_a4, sizeof(float));
+    b = calloc(m_a4*n_a4, sizeof(float));
+    if( m_diff ){ // c only needs to be padded if m_a isn't a multiple of 4
+      c = malloc(m_a4*m_a4*sizeof(float));
+    }else {
+      c = C;
+    }
+
+    for( int i = 0; i < n_a; i++ ){ // moves the values of A and B into a and b
+      for( int j = 0; j < m_a; j++ ){
+        *(a + i*m_a4 + j) = *(A + i*m_a + j);
+        *(b + i*m_a4 + j) = *(B + i*m_a + j);
+      }
+    }
+  } else {
+    a = A;
+    b = B;
+    c = C;
+  }
 
   // e, y
   // j, b, bsel
@@ -30,37 +58,21 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
     __m128 tempB1;
     __m128 tempC1i1, tempC2i1, tempC3i1, tempC4i1;
     __m128 tempC5i1, tempC6i1, tempC7i1, tempC8i1;
-    __m128 tempC9i1, tempC10i1, tempC11i1, tempC12i1;
-    __m128 tempC13i1, tempC14i1, tempC15i1, tempC16i1;
     __m128 tempC1i2, tempC2i2, tempC3i2, tempC4i2;
     __m128 tempC5i2, tempC6i2, tempC7i2, tempC8i2;
-    __m128 tempC9i2, tempC10i2, tempC11i2, tempC12i2;
-    __m128 tempC13i2, tempC14i2, tempC15i2, tempC16i2;
     __m128 tempC1i3, tempC2i3, tempC3i3, tempC4i3;
     __m128 tempC5i3, tempC6i3, tempC7i3, tempC8i3;
-    __m128 tempC9i3, tempC10i3, tempC11i3, tempC12i3;
-    __m128 tempC13i3, tempC14i3, tempC15i3, tempC16i3;
     __m128 tempC1i4, tempC2i4, tempC3i4, tempC4i4;
     __m128 tempC5i4, tempC6i4, tempC7i4, tempC8i4;
-    __m128 tempC9i4, tempC10i4, tempC11i4, tempC12i4;
-    __m128 tempC13i4, tempC14i4, tempC15i4, tempC16i4;
     __m128 tempC1i5, tempC2i5, tempC3i5, tempC4i5;
     __m128 tempC5i5, tempC6i5, tempC7i5, tempC8i5;
-    __m128 tempC9i5, tempC10i5, tempC11i5, tempC12i5;
-    __m128 tempC13i5, tempC14i5, tempC15i5, tempC16i5;
     __m128 tempC1i6, tempC2i6, tempC3i6, tempC4i6;
     __m128 tempC5i6, tempC6i6, tempC7i6, tempC8i6;
-    __m128 tempC9i6, tempC10i6, tempC11i6, tempC12i6;
-    __m128 tempC13i6, tempC14i6, tempC15i6, tempC16i6;
     __m128 tempC1i7, tempC2i7, tempC3i7, tempC4i7;
     __m128 tempC5i7, tempC6i7, tempC7i7, tempC8i7;
-    __m128 tempC9i7, tempC10i7, tempC11i7, tempC12i7;
-    __m128 tempC13i7, tempC14i7, tempC15i7, tempC16i7;
     __m128 tempC1i8, tempC2i8, tempC3i8, tempC4i8;
     __m128 tempC5i8, tempC6i8, tempC7i8, tempC8i8;
-    __m128 tempC9i8, tempC10i8, tempC11i8, tempC12i8;
-    __m128 tempC13i8, tempC14i8, tempC15i8, tempC16i8;
-    for(int j = 0; j < m_a4; j += 16) {
+    for(int j = 0; j < m_a4; j += 8) {
       float *bsel = b + j;
       int j1 = j*m_a4;
       int j2 = j1 + m_a4;
@@ -70,14 +82,6 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
       int j6 = j5 + m_a4;
       int j7 = j6 + m_a4;
       int j8 = j7 + m_a4;
-      int j9 = j8 + m_a4;
-      int j10 = j9 + m_a4;
-      int j11 = j10 + m_a4;
-      int j12 = j11 + m_a4;
-      int j13 = j12 + m_a4;
-      int j14 = j13 + m_a4;
-      int j15 = j14 + m_a4;
-      int j16 = j15 + m_a4;
       for( int i = y; i < e; i += 32 ) {
         float *ai = a + i;
         float *ai4 = ai + 4;
@@ -96,15 +100,6 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
         tempC6i1 = _mm_setzero_ps(); 
         tempC7i1 = _mm_setzero_ps(); 
         tempC8i1 = _mm_setzero_ps(); 
-        tempC9i1 = _mm_setzero_ps(); 
-        tempC10i1 = _mm_setzero_ps(); 
-        tempC11i1 = _mm_setzero_ps(); 
-        tempC12i1 = _mm_setzero_ps(); 
-        tempC13i1 = _mm_setzero_ps(); 
-        tempC14i1 = _mm_setzero_ps(); 
-        tempC15i1 = _mm_setzero_ps(); 
-        tempC16i1 = _mm_setzero_ps(); 
-
         tempC1i2 = _mm_setzero_ps(); 
         tempC2i2 = _mm_setzero_ps(); 
         tempC3i2 = _mm_setzero_ps(); 
@@ -113,15 +108,6 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
         tempC6i2 = _mm_setzero_ps(); 
         tempC7i2 = _mm_setzero_ps(); 
         tempC8i2 = _mm_setzero_ps(); 
-        tempC9i2 = _mm_setzero_ps(); 
-        tempC10i2 = _mm_setzero_ps(); 
-        tempC11i2 = _mm_setzero_ps(); 
-        tempC12i2 = _mm_setzero_ps(); 
-        tempC13i2 = _mm_setzero_ps(); 
-        tempC14i2 = _mm_setzero_ps(); 
-        tempC15i2 = _mm_setzero_ps(); 
-        tempC16i2 = _mm_setzero_ps(); 
-
         tempC1i3 = _mm_setzero_ps(); 
         tempC2i3 = _mm_setzero_ps(); 
         tempC3i3 = _mm_setzero_ps(); 
@@ -130,15 +116,6 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
         tempC6i3 = _mm_setzero_ps(); 
         tempC7i3 = _mm_setzero_ps(); 
         tempC8i3 = _mm_setzero_ps(); 
-        tempC9i3 = _mm_setzero_ps(); 
-        tempC10i3 = _mm_setzero_ps(); 
-        tempC11i3 = _mm_setzero_ps(); 
-        tempC12i3 = _mm_setzero_ps(); 
-        tempC13i3 = _mm_setzero_ps(); 
-        tempC14i3 = _mm_setzero_ps(); 
-        tempC15i3 = _mm_setzero_ps(); 
-        tempC16i3 = _mm_setzero_ps(); 
-
         tempC1i4 = _mm_setzero_ps(); 
         tempC2i4 = _mm_setzero_ps(); 
         tempC3i4 = _mm_setzero_ps(); 
@@ -147,15 +124,6 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
         tempC6i4 = _mm_setzero_ps(); 
         tempC7i4 = _mm_setzero_ps(); 
         tempC8i4 = _mm_setzero_ps(); 
-        tempC9i4 = _mm_setzero_ps(); 
-        tempC10i4 = _mm_setzero_ps(); 
-        tempC11i4 = _mm_setzero_ps(); 
-        tempC12i4 = _mm_setzero_ps(); 
-        tempC13i4 = _mm_setzero_ps(); 
-        tempC14i4 = _mm_setzero_ps(); 
-        tempC15i4 = _mm_setzero_ps(); 
-        tempC16i4 = _mm_setzero_ps(); 
-
         tempC1i5 = _mm_setzero_ps(); 
         tempC2i5 = _mm_setzero_ps(); 
         tempC3i5 = _mm_setzero_ps(); 
@@ -164,15 +132,6 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
         tempC6i5 = _mm_setzero_ps(); 
         tempC7i5 = _mm_setzero_ps(); 
         tempC8i5 = _mm_setzero_ps(); 
-        tempC9i5 = _mm_setzero_ps(); 
-        tempC10i5 = _mm_setzero_ps(); 
-        tempC11i5 = _mm_setzero_ps(); 
-        tempC12i5 = _mm_setzero_ps(); 
-        tempC13i5 = _mm_setzero_ps(); 
-        tempC14i5 = _mm_setzero_ps(); 
-        tempC15i5 = _mm_setzero_ps(); 
-        tempC16i5 = _mm_setzero_ps(); 
-
         tempC1i6 = _mm_setzero_ps(); 
         tempC2i6 = _mm_setzero_ps(); 
         tempC3i6 = _mm_setzero_ps(); 
@@ -181,15 +140,6 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
         tempC6i6 = _mm_setzero_ps(); 
         tempC7i6 = _mm_setzero_ps(); 
         tempC8i6 = _mm_setzero_ps(); 
-        tempC9i6 = _mm_setzero_ps(); 
-        tempC10i6 = _mm_setzero_ps(); 
-        tempC11i6 = _mm_setzero_ps(); 
-        tempC12i6 = _mm_setzero_ps(); 
-        tempC13i6 = _mm_setzero_ps(); 
-        tempC14i6 = _mm_setzero_ps(); 
-        tempC15i6 = _mm_setzero_ps(); 
-        tempC16i6 = _mm_setzero_ps(); 
-
         tempC1i7 = _mm_setzero_ps(); 
         tempC2i7 = _mm_setzero_ps(); 
         tempC3i7 = _mm_setzero_ps(); 
@@ -198,15 +148,6 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
         tempC6i7 = _mm_setzero_ps(); 
         tempC7i7 = _mm_setzero_ps(); 
         tempC8i7 = _mm_setzero_ps(); 
-        tempC9i7 = _mm_setzero_ps(); 
-        tempC10i7 = _mm_setzero_ps(); 
-        tempC11i7 = _mm_setzero_ps(); 
-        tempC12i7 = _mm_setzero_ps(); 
-        tempC13i7 = _mm_setzero_ps(); 
-        tempC14i7 = _mm_setzero_ps(); 
-        tempC15i7 = _mm_setzero_ps(); 
-        tempC16i7 = _mm_setzero_ps(); 
-        
         tempC1i8 = _mm_setzero_ps(); 
         tempC2i8 = _mm_setzero_ps(); 
         tempC3i8 = _mm_setzero_ps(); 
@@ -215,16 +156,8 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
         tempC6i8 = _mm_setzero_ps(); 
         tempC7i8 = _mm_setzero_ps(); 
         tempC8i8 = _mm_setzero_ps(); 
-        tempC9i8 = _mm_setzero_ps(); 
-        tempC10i8 = _mm_setzero_ps(); 
-        tempC11i8 = _mm_setzero_ps(); 
-        tempC12i8 = _mm_setzero_ps(); 
-        tempC13i8 = _mm_setzero_ps(); 
-        tempC14i8 = _mm_setzero_ps(); 
-        tempC15i8 = _mm_setzero_ps(); 
-        tempC16i8 = _mm_setzero_ps(); 
 
-        for( int k = 0; k < n_a; k++ ) {
+        for( int k = 0; k < n_a4; k++ ) {
           int k0 = k*m_a4;
 
           tempA1 = _mm_loadu_ps(ai+k0); 
@@ -323,94 +256,6 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
           tempC8i6 += _mm_mul_ps(tempA6, tempB1);
           tempC8i7 += _mm_mul_ps(tempA7, tempB1);
           tempC8i8 += _mm_mul_ps(tempA8, tempB1);
-
-          tempB1 = _mm_load1_ps(bsel+8+k0);
-
-          tempC9i1 += _mm_mul_ps(tempA1, tempB1);
-          tempC9i2 += _mm_mul_ps(tempA2, tempB1);
-          tempC9i3 += _mm_mul_ps(tempA3, tempB1);
-          tempC9i4 += _mm_mul_ps(tempA4, tempB1);
-          tempC9i5 += _mm_mul_ps(tempA5, tempB1);
-          tempC9i6 += _mm_mul_ps(tempA6, tempB1);
-          tempC9i7 += _mm_mul_ps(tempA7, tempB1);
-          tempC9i8 += _mm_mul_ps(tempA8, tempB1);
-
-          tempB1 = _mm_load1_ps(bsel+9+k0);
-
-          tempC10i1 += _mm_mul_ps(tempA1, tempB1);
-          tempC10i2 += _mm_mul_ps(tempA2, tempB1);
-          tempC10i3 += _mm_mul_ps(tempA3, tempB1);
-          tempC10i4 += _mm_mul_ps(tempA4, tempB1);
-          tempC10i5 += _mm_mul_ps(tempA5, tempB1);
-          tempC10i6 += _mm_mul_ps(tempA6, tempB1);
-          tempC10i7 += _mm_mul_ps(tempA7, tempB1);
-          tempC10i8 += _mm_mul_ps(tempA8, tempB1);
-
-          tempB1 = _mm_load1_ps(bsel+10+k0);
-
-          tempC11i1 += _mm_mul_ps(tempA1, tempB1);
-          tempC11i2 += _mm_mul_ps(tempA2, tempB1);
-          tempC11i3 += _mm_mul_ps(tempA3, tempB1);
-          tempC11i4 += _mm_mul_ps(tempA4, tempB1);
-          tempC11i5 += _mm_mul_ps(tempA5, tempB1);
-          tempC11i6 += _mm_mul_ps(tempA6, tempB1);
-          tempC11i7 += _mm_mul_ps(tempA7, tempB1);
-          tempC11i8 += _mm_mul_ps(tempA8, tempB1);
-
-          tempB1 = _mm_load1_ps(bsel+11+k0);
-
-          tempC12i1 += _mm_mul_ps(tempA1, tempB1);
-          tempC12i2 += _mm_mul_ps(tempA2, tempB1);
-          tempC12i3 += _mm_mul_ps(tempA3, tempB1);
-          tempC12i4 += _mm_mul_ps(tempA4, tempB1);
-          tempC12i5 += _mm_mul_ps(tempA5, tempB1);
-          tempC12i6 += _mm_mul_ps(tempA6, tempB1);
-          tempC12i7 += _mm_mul_ps(tempA7, tempB1);
-          tempC12i8 += _mm_mul_ps(tempA8, tempB1);
-
-          tempB1 = _mm_load1_ps(bsel+12+k0);
-
-          tempC13i1 += _mm_mul_ps(tempA1, tempB1);
-          tempC13i2 += _mm_mul_ps(tempA2, tempB1);
-          tempC13i3 += _mm_mul_ps(tempA3, tempB1);
-          tempC13i4 += _mm_mul_ps(tempA4, tempB1);
-          tempC13i5 += _mm_mul_ps(tempA5, tempB1);
-          tempC13i6 += _mm_mul_ps(tempA6, tempB1);
-          tempC13i7 += _mm_mul_ps(tempA7, tempB1);
-          tempC13i8 += _mm_mul_ps(tempA8, tempB1);
-
-          tempB1 = _mm_load1_ps(bsel+13+k0);
-
-          tempC14i1 += _mm_mul_ps(tempA1, tempB1);
-          tempC14i2 += _mm_mul_ps(tempA2, tempB1);
-          tempC14i3 += _mm_mul_ps(tempA3, tempB1);
-          tempC14i4 += _mm_mul_ps(tempA4, tempB1);
-          tempC14i5 += _mm_mul_ps(tempA5, tempB1);
-          tempC14i6 += _mm_mul_ps(tempA6, tempB1);
-          tempC14i7 += _mm_mul_ps(tempA7, tempB1);
-          tempC14i8 += _mm_mul_ps(tempA8, tempB1);
-
-          tempB1 = _mm_load1_ps(bsel+14+k0);
-
-          tempC15i1 += _mm_mul_ps(tempA1, tempB1);
-          tempC15i2 += _mm_mul_ps(tempA2, tempB1);
-          tempC15i3 += _mm_mul_ps(tempA3, tempB1);
-          tempC15i4 += _mm_mul_ps(tempA4, tempB1);
-          tempC15i5 += _mm_mul_ps(tempA5, tempB1);
-          tempC15i6 += _mm_mul_ps(tempA6, tempB1);
-          tempC15i7 += _mm_mul_ps(tempA7, tempB1);
-          tempC15i8 += _mm_mul_ps(tempA8, tempB1);
-
-          tempB1 = _mm_load1_ps(bsel+15+k0);
-
-          tempC16i1 += _mm_mul_ps(tempA1, tempB1);
-          tempC16i2 += _mm_mul_ps(tempA2, tempB1);
-          tempC16i3 += _mm_mul_ps(tempA3, tempB1);
-          tempC16i4 += _mm_mul_ps(tempA4, tempB1);
-          tempC16i5 += _mm_mul_ps(tempA5, tempB1);
-          tempC16i6 += _mm_mul_ps(tempA6, tempB1);
-          tempC16i7 += _mm_mul_ps(tempA7, tempB1);
-          tempC16i8 += _mm_mul_ps(tempA8, tempB1);
         }
 
         float *ci = c + i;
@@ -423,14 +268,6 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
         _mm_storeu_ps(ci+j6, tempC6i1);
         _mm_storeu_ps(ci+j7, tempC7i1);
         _mm_storeu_ps(ci+j8, tempC8i1);
-        _mm_storeu_ps(ci+j9, tempC9i1);
-        _mm_storeu_ps(ci+j10, tempC10i1);
-        _mm_storeu_ps(ci+j11, tempC11i1);
-        _mm_storeu_ps(ci+j12, tempC12i1);
-        _mm_storeu_ps(ci+j13, tempC13i1);
-        _mm_storeu_ps(ci+j14, tempC14i1);
-        _mm_storeu_ps(ci+j15, tempC15i1);
-        _mm_storeu_ps(ci+j16, tempC16i1);
 
 
         ci += 4;
@@ -443,14 +280,6 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
         _mm_storeu_ps(ci+j6, tempC6i2);
         _mm_storeu_ps(ci+j7, tempC7i2);
         _mm_storeu_ps(ci+j8, tempC8i2);
-        _mm_storeu_ps(ci+j9, tempC9i2);
-        _mm_storeu_ps(ci+j10, tempC10i2);
-        _mm_storeu_ps(ci+j11, tempC11i2);
-        _mm_storeu_ps(ci+j12, tempC12i2);
-        _mm_storeu_ps(ci+j13, tempC13i2);
-        _mm_storeu_ps(ci+j14, tempC14i2);
-        _mm_storeu_ps(ci+j15, tempC15i2);
-        _mm_storeu_ps(ci+j16, tempC16i2);
 
         ci += 4;
 
@@ -462,14 +291,6 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
         _mm_storeu_ps(ci+j6, tempC6i3);
         _mm_storeu_ps(ci+j7, tempC7i3);
         _mm_storeu_ps(ci+j8, tempC8i3);
-        _mm_storeu_ps(ci+j9, tempC9i3);
-        _mm_storeu_ps(ci+j10, tempC10i3);
-        _mm_storeu_ps(ci+j11, tempC11i3);
-        _mm_storeu_ps(ci+j12, tempC12i3);
-        _mm_storeu_ps(ci+j13, tempC13i3);
-        _mm_storeu_ps(ci+j14, tempC14i3);
-        _mm_storeu_ps(ci+j15, tempC15i3);
-        _mm_storeu_ps(ci+j16, tempC16i3);
 
         ci += 4;
 
@@ -481,14 +302,6 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
         _mm_storeu_ps(ci+j6, tempC6i4);
         _mm_storeu_ps(ci+j7, tempC7i4);
         _mm_storeu_ps(ci+j8, tempC8i4);
-        _mm_storeu_ps(ci+j9, tempC9i4);
-        _mm_storeu_ps(ci+j10, tempC10i4);
-        _mm_storeu_ps(ci+j11, tempC11i4);
-        _mm_storeu_ps(ci+j12, tempC12i4);
-        _mm_storeu_ps(ci+j13, tempC13i4);
-        _mm_storeu_ps(ci+j14, tempC14i4);
-        _mm_storeu_ps(ci+j15, tempC15i4);
-        _mm_storeu_ps(ci+j16, tempC16i4);
 
         ci += 4;
 
@@ -500,14 +313,6 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
         _mm_storeu_ps(ci+j6, tempC6i5);
         _mm_storeu_ps(ci+j7, tempC7i5);
         _mm_storeu_ps(ci+j8, tempC8i5);
-        _mm_storeu_ps(ci+j9, tempC9i5);
-        _mm_storeu_ps(ci+j10, tempC10i5);
-        _mm_storeu_ps(ci+j11, tempC11i5);
-        _mm_storeu_ps(ci+j12, tempC12i5);
-        _mm_storeu_ps(ci+j13, tempC13i5);
-        _mm_storeu_ps(ci+j14, tempC14i5);
-        _mm_storeu_ps(ci+j15, tempC15i5);
-        _mm_storeu_ps(ci+j16, tempC16i5);
 
         ci += 4;
 
@@ -519,14 +324,6 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
         _mm_storeu_ps(ci+j6, tempC6i6);
         _mm_storeu_ps(ci+j7, tempC7i6);
         _mm_storeu_ps(ci+j8, tempC8i6);
-        _mm_storeu_ps(ci+j9, tempC9i6);
-        _mm_storeu_ps(ci+j10, tempC10i6);
-        _mm_storeu_ps(ci+j11, tempC11i6);
-        _mm_storeu_ps(ci+j12, tempC12i6);
-        _mm_storeu_ps(ci+j13, tempC13i6);
-        _mm_storeu_ps(ci+j14, tempC14i6);
-        _mm_storeu_ps(ci+j15, tempC15i6);
-        _mm_storeu_ps(ci+j16, tempC16i6);
 
         ci += 4;
 
@@ -538,14 +335,6 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
         _mm_storeu_ps(ci+j6, tempC6i7);
         _mm_storeu_ps(ci+j7, tempC7i7);
         _mm_storeu_ps(ci+j8, tempC8i7);
-        _mm_storeu_ps(ci+j9, tempC9i7);
-        _mm_storeu_ps(ci+j10, tempC10i7);
-        _mm_storeu_ps(ci+j11, tempC11i7);
-        _mm_storeu_ps(ci+j12, tempC12i7);
-        _mm_storeu_ps(ci+j13, tempC13i7);
-        _mm_storeu_ps(ci+j14, tempC14i7);
-        _mm_storeu_ps(ci+j15, tempC15i7);
-        _mm_storeu_ps(ci+j16, tempC16i7);
 
         ci += 4;
 
@@ -557,15 +346,22 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
         _mm_storeu_ps(ci+j6, tempC6i8);
         _mm_storeu_ps(ci+j7, tempC7i8);
         _mm_storeu_ps(ci+j8, tempC8i8);
-        _mm_storeu_ps(ci+j9, tempC9i8);
-        _mm_storeu_ps(ci+j10, tempC10i8);
-        _mm_storeu_ps(ci+j11, tempC11i8);
-        _mm_storeu_ps(ci+j12, tempC12i8);
-        _mm_storeu_ps(ci+j13, tempC13i8);
-        _mm_storeu_ps(ci+j14, tempC14i8);
-        _mm_storeu_ps(ci+j15, tempC15i8);
-        _mm_storeu_ps(ci+j16, tempC16i8);
       }
     }
   }
+  //C[i+j*m_a] += A[i+k*m_a] * B[j+k*m_a];
+
+  if( m_diff || n_diff ){
+    free(a); // frees allocated matrices
+    free(b); // a and b don't change, so no need to move it back
+    if( m_diff ){ // unpads c
+      for(int i = 0; i < m_a; i++){
+        for(int j = 0; j < m_a; j++){
+          *(C + i*m_a + j) = *(c + i*m_a4 + j);
+        }
+      }
+      free(c);
+    }
+  }
+
 }
