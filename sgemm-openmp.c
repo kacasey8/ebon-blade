@@ -571,7 +571,279 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
       }
 
       if(e == m_a32){
-        for( int i = m_a32; i < m_a4; i += 4){
+        if(m_a32 != m_a16){
+          float *ai = a+m_a32;
+          float *ai4 = ai + 4;
+          float *ai8 = ai4 + 4;
+          float *ai12 = ai8 + 4;
+
+          tempC1i1 = _mm_setzero_ps(); // C values begin at 0 anways, so there is no use in loading
+          tempC2i1 = _mm_setzero_ps(); // from C.
+          tempC3i1 = _mm_setzero_ps();
+          tempC4i1 = _mm_setzero_ps();
+          tempC5i1 = _mm_setzero_ps();
+          tempC6i1 = _mm_setzero_ps();
+          tempC7i1 = _mm_setzero_ps();
+          tempC8i1 = _mm_setzero_ps();
+          tempC9i1 = _mm_setzero_ps();
+          tempC10i1 = _mm_setzero_ps();
+          tempC11i1 = _mm_setzero_ps();
+          tempC12i1 = _mm_setzero_ps();
+          tempC13i1 = _mm_setzero_ps();
+          tempC14i1 = _mm_setzero_ps();
+          tempC15i1 = _mm_setzero_ps();
+          tempC16i1 = _mm_setzero_ps();
+
+          tempC1i2 = _mm_setzero_ps();
+          tempC2i2 = _mm_setzero_ps();
+          tempC3i2 = _mm_setzero_ps();
+          tempC4i2 = _mm_setzero_ps();
+          tempC5i2 = _mm_setzero_ps();
+          tempC6i2 = _mm_setzero_ps();
+          tempC7i2 = _mm_setzero_ps();
+          tempC8i2 = _mm_setzero_ps();
+          tempC9i2 = _mm_setzero_ps();
+          tempC10i2 = _mm_setzero_ps();
+          tempC11i2 = _mm_setzero_ps();
+          tempC12i2 = _mm_setzero_ps();
+          tempC13i2 = _mm_setzero_ps();
+          tempC14i2 = _mm_setzero_ps();
+          tempC15i2 = _mm_setzero_ps();
+          tempC16i2 = _mm_setzero_ps();
+
+          tempC1i3 = _mm_setzero_ps();
+          tempC2i3 = _mm_setzero_ps();
+          tempC3i3 = _mm_setzero_ps();
+          tempC4i3 = _mm_setzero_ps();
+          tempC5i3 = _mm_setzero_ps();
+          tempC6i3 = _mm_setzero_ps();
+          tempC7i3 = _mm_setzero_ps();
+          tempC8i3 = _mm_setzero_ps();
+          tempC9i3 = _mm_setzero_ps();
+          tempC10i3 = _mm_setzero_ps();
+          tempC11i3 = _mm_setzero_ps();
+          tempC12i3 = _mm_setzero_ps();
+          tempC13i3 = _mm_setzero_ps();
+          tempC14i3 = _mm_setzero_ps();
+          tempC15i3 = _mm_setzero_ps();
+          tempC16i3 = _mm_setzero_ps();
+
+          tempC1i4 = _mm_setzero_ps();
+          tempC2i4 = _mm_setzero_ps();
+          tempC3i4 = _mm_setzero_ps();
+          tempC4i4 = _mm_setzero_ps();
+          tempC5i4 = _mm_setzero_ps();
+          tempC6i4 = _mm_setzero_ps();
+          tempC7i4 = _mm_setzero_ps();
+          tempC8i4 = _mm_setzero_ps();
+          tempC9i4 = _mm_setzero_ps();
+          tempC10i4 = _mm_setzero_ps();
+          tempC11i4 = _mm_setzero_ps();
+          tempC12i4 = _mm_setzero_ps();
+          tempC13i4 = _mm_setzero_ps();
+          tempC14i4 = _mm_setzero_ps();
+          tempC15i4 = _mm_setzero_ps();
+          tempC16i4 = _mm_setzero_ps();
+
+          for( int k = 0; k < n_a; k++){
+            int k0 = k*m_a;
+
+            tempA1 = _mm_loadu_ps(ai+k0);
+            tempA2 = _mm_loadu_ps(ai4+k0);
+            tempA3 = _mm_loadu_ps(ai8+k0);
+            tempA4 = _mm_loadu_ps(ai12+k0);
+
+            tempB1 = _mm_load1_ps(bsel+k0); 
+
+            tempC1i1 += _mm_mul_ps(tempA1, tempB1);
+            tempC1i2 += _mm_mul_ps(tempA2, tempB1);
+            tempC1i3 += _mm_mul_ps(tempA3, tempB1);
+            tempC1i4 += _mm_mul_ps(tempA4, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+1+k0);
+
+            tempC2i1 += _mm_mul_ps(tempA1, tempB1);
+            tempC2i2 += _mm_mul_ps(tempA2, tempB1);
+            tempC2i3 += _mm_mul_ps(tempA3, tempB1);
+            tempC2i4 += _mm_mul_ps(tempA4, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+2+k0); 
+
+            tempC3i1 += _mm_mul_ps(tempA1, tempB1);
+            tempC3i2 += _mm_mul_ps(tempA2, tempB1);
+            tempC3i3 += _mm_mul_ps(tempA3, tempB1);
+            tempC3i4 += _mm_mul_ps(tempA4, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+3+k0);
+
+            tempC4i1 += _mm_mul_ps(tempA1, tempB1);
+            tempC4i2 += _mm_mul_ps(tempA2, tempB1);
+            tempC4i3 += _mm_mul_ps(tempA3, tempB1);
+            tempC4i4 += _mm_mul_ps(tempA4, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+4+k0);
+
+            tempC5i1 += _mm_mul_ps(tempA1, tempB1);
+            tempC5i2 += _mm_mul_ps(tempA2, tempB1);
+            tempC5i3 += _mm_mul_ps(tempA3, tempB1);
+            tempC5i4 += _mm_mul_ps(tempA4, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+5+k0);
+
+            tempC6i1 += _mm_mul_ps(tempA1, tempB1);
+            tempC6i2 += _mm_mul_ps(tempA2, tempB1);
+            tempC6i3 += _mm_mul_ps(tempA3, tempB1);
+            tempC6i4 += _mm_mul_ps(tempA4, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+6+k0);
+
+            tempC7i1 += _mm_mul_ps(tempA1, tempB1);
+            tempC7i2 += _mm_mul_ps(tempA2, tempB1);
+            tempC7i3 += _mm_mul_ps(tempA3, tempB1);
+            tempC7i4 += _mm_mul_ps(tempA4, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+7+k0);
+
+            tempC8i1 += _mm_mul_ps(tempA1, tempB1);
+            tempC8i2 += _mm_mul_ps(tempA2, tempB1);
+            tempC8i3 += _mm_mul_ps(tempA3, tempB1);
+            tempC8i4 += _mm_mul_ps(tempA4, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+8+k0);
+
+            tempC9i1 += _mm_mul_ps(tempA1, tempB1);
+            tempC9i2 += _mm_mul_ps(tempA2, tempB1);
+            tempC9i3 += _mm_mul_ps(tempA3, tempB1);
+            tempC9i4 += _mm_mul_ps(tempA4, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+9+k0);
+
+            tempC10i1 += _mm_mul_ps(tempA1, tempB1);
+            tempC10i2 += _mm_mul_ps(tempA2, tempB1);
+            tempC10i3 += _mm_mul_ps(tempA3, tempB1);
+            tempC10i4 += _mm_mul_ps(tempA4, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+10+k0);
+
+            tempC11i1 += _mm_mul_ps(tempA1, tempB1);
+            tempC11i2 += _mm_mul_ps(tempA2, tempB1);
+            tempC11i3 += _mm_mul_ps(tempA3, tempB1);
+            tempC11i4 += _mm_mul_ps(tempA4, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+11+k0);
+
+            tempC12i1 += _mm_mul_ps(tempA1, tempB1);
+            tempC12i2 += _mm_mul_ps(tempA2, tempB1);
+            tempC12i3 += _mm_mul_ps(tempA3, tempB1);
+            tempC12i4 += _mm_mul_ps(tempA4, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+12+k0);
+
+            tempC13i1 += _mm_mul_ps(tempA1, tempB1);
+            tempC13i2 += _mm_mul_ps(tempA2, tempB1);
+            tempC13i3 += _mm_mul_ps(tempA3, tempB1);
+            tempC13i4 += _mm_mul_ps(tempA4, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+13+k0);
+
+            tempC14i1 += _mm_mul_ps(tempA1, tempB1);
+            tempC14i2 += _mm_mul_ps(tempA2, tempB1);
+            tempC14i3 += _mm_mul_ps(tempA3, tempB1);
+            tempC14i4 += _mm_mul_ps(tempA4, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+14+k0);
+
+            tempC15i1 += _mm_mul_ps(tempA1, tempB1);
+            tempC15i2 += _mm_mul_ps(tempA2, tempB1);
+            tempC15i3 += _mm_mul_ps(tempA3, tempB1);
+            tempC15i4 += _mm_mul_ps(tempA4, tempB1);
+
+            tempB1 = _mm_load1_ps(bsel+15+k0);
+
+            tempC16i1 += _mm_mul_ps(tempA1, tempB1);
+            tempC16i2 += _mm_mul_ps(tempA2, tempB1);
+            tempC16i3 += _mm_mul_ps(tempA3, tempB1);
+            tempC16i4 += _mm_mul_ps(tempA4, tempB1);
+          }
+
+          float *ci = c+m_a32;
+
+          _mm_storeu_ps(ci+j1, tempC1i1);
+          _mm_storeu_ps(ci+j2, tempC2i1);
+          _mm_storeu_ps(ci+j3, tempC3i1);
+          _mm_storeu_ps(ci+j4, tempC4i1);
+          _mm_storeu_ps(ci+j5, tempC5i1);
+          _mm_storeu_ps(ci+j6, tempC6i1);
+          _mm_storeu_ps(ci+j7, tempC7i1);
+          _mm_storeu_ps(ci+j8, tempC8i1);
+          _mm_storeu_ps(ci+j9, tempC9i1);
+          _mm_storeu_ps(ci+j10, tempC10i1);
+          _mm_storeu_ps(ci+j11, tempC11i1);
+          _mm_storeu_ps(ci+j12, tempC12i1);
+          _mm_storeu_ps(ci+j13, tempC13i1);
+          _mm_storeu_ps(ci+j14, tempC14i1);
+          _mm_storeu_ps(ci+j15, tempC15i1);
+          _mm_storeu_ps(ci+j16, tempC16i1);
+
+          ci += 4;
+
+          _mm_storeu_ps(ci+j1, tempC1i2);
+          _mm_storeu_ps(ci+j2, tempC2i2);
+          _mm_storeu_ps(ci+j3, tempC3i2);
+          _mm_storeu_ps(ci+j4, tempC4i2);
+          _mm_storeu_ps(ci+j5, tempC5i2);
+          _mm_storeu_ps(ci+j6, tempC6i2);
+          _mm_storeu_ps(ci+j7, tempC7i2);
+          _mm_storeu_ps(ci+j8, tempC8i2);
+          _mm_storeu_ps(ci+j9, tempC9i2);
+          _mm_storeu_ps(ci+j10, tempC10i2);
+          _mm_storeu_ps(ci+j11, tempC11i2);
+          _mm_storeu_ps(ci+j12, tempC12i2);
+          _mm_storeu_ps(ci+j13, tempC13i2);
+          _mm_storeu_ps(ci+j14, tempC14i2);
+          _mm_storeu_ps(ci+j15, tempC15i2);
+          _mm_storeu_ps(ci+j16, tempC16i2);
+
+          ci += 4;
+
+          _mm_storeu_ps(ci+j1, tempC1i3);
+          _mm_storeu_ps(ci+j2, tempC2i3);
+          _mm_storeu_ps(ci+j3, tempC3i3);
+          _mm_storeu_ps(ci+j4, tempC4i3);
+          _mm_storeu_ps(ci+j5, tempC5i3);
+          _mm_storeu_ps(ci+j6, tempC6i3);
+          _mm_storeu_ps(ci+j7, tempC7i3);
+          _mm_storeu_ps(ci+j8, tempC8i3);
+          _mm_storeu_ps(ci+j9, tempC9i3);
+          _mm_storeu_ps(ci+j10, tempC10i3);
+          _mm_storeu_ps(ci+j11, tempC11i3);
+          _mm_storeu_ps(ci+j12, tempC12i3);
+          _mm_storeu_ps(ci+j13, tempC13i3);
+          _mm_storeu_ps(ci+j14, tempC14i3);
+          _mm_storeu_ps(ci+j15, tempC15i3);
+          _mm_storeu_ps(ci+j16, tempC16i3);
+
+          ci += 4;
+
+          _mm_storeu_ps(ci+j1, tempC1i4);
+          _mm_storeu_ps(ci+j2, tempC2i4);
+          _mm_storeu_ps(ci+j3, tempC3i4);
+          _mm_storeu_ps(ci+j4, tempC4i4);
+          _mm_storeu_ps(ci+j5, tempC5i4);
+          _mm_storeu_ps(ci+j6, tempC6i4);
+          _mm_storeu_ps(ci+j7, tempC7i4);
+          _mm_storeu_ps(ci+j8, tempC8i4);
+          _mm_storeu_ps(ci+j9, tempC9i4);
+          _mm_storeu_ps(ci+j10, tempC10i4);
+          _mm_storeu_ps(ci+j11, tempC11i4);
+          _mm_storeu_ps(ci+j12, tempC12i4);
+          _mm_storeu_ps(ci+j13, tempC13i4);
+          _mm_storeu_ps(ci+j14, tempC14i4);
+          _mm_storeu_ps(ci+j15, tempC15i4);
+          _mm_storeu_ps(ci+j16, tempC16i4);
+        }
+
+        for( int i = m_a16; i < m_a4; i += 4){
           float *ai = a+i;
 
           tempC1i1 = _mm_setzero_ps(); // C values begin at 0 anways, so there is no use in loading
@@ -594,7 +866,7 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
           for( int k = 0; k < n_a; k++){
             int k0 = k*m_a;
 
-            tempA1 = _mm_loadu_ps(ai + k0);
+            tempA1 = _mm_loadu_ps(ai+k0);
 
             tempB1 = _mm_load1_ps(bsel+k0);
             tempC1i1 += _mm_mul_ps(tempA1, tempB1);
@@ -789,7 +1061,40 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
       _mm_storeu_ps(ci+24+j1, tempC7i1);
       _mm_storeu_ps(ci+28+j1, tempC8i1);
     }
-    for( int i = m_a32; i < m_a4; i += 4) {
+    for( int i = m_a32; i < m_a16; i += 16) {
+      float *ai = a+i;
+      float *ai4 = ai + 4;
+      float *ai8 = ai4 + 4;
+      float *ai12 = ai8 + 4;
+
+      tempC1i1 = _mm_setzero_ps(); // C values begin at 0 anways, so there is no use in loading
+      tempC2i1 = _mm_setzero_ps(); // from C.
+      tempC3i1 = _mm_setzero_ps();
+      tempC4i1 = _mm_setzero_ps();
+      for( int k = 0; k < n_a; k++) {
+        int k0 = k*m_a;
+
+        tempB1 = _mm_load1_ps(bsel+k0);
+        tempA1 = _mm_loadu_ps(ai+k0);
+        tempC1i1 += _mm_mul_ps(tempA1, tempB1);
+
+        tempA1 = _mm_loadu_ps(ai+4+k0);
+        tempC2i1 += _mm_mul_ps(tempA1, tempB1);
+
+        tempA1 = _mm_loadu_ps(ai+8+k0);
+        tempC3i1 += _mm_mul_ps(tempA1, tempB1);
+
+        tempA1 = _mm_loadu_ps(ai+12+k0);
+        tempC4i1 += _mm_mul_ps(tempA1, tempB1);
+      }
+      float *ci = c+i;
+
+      _mm_storeu_ps(ci+j1, tempC1i1);
+      _mm_storeu_ps(ci+4+j1, tempC2i1);
+      _mm_storeu_ps(ci+8+j1, tempC3i1);
+      _mm_storeu_ps(ci+12+j1, tempC4i1);
+    }
+    for( int i = m_a16; i < m_a4; i += 4) {
       float *ai = a+i;
 
       tempC1i1 = _mm_setzero_ps();
@@ -802,7 +1107,7 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
       }
       _mm_storeu_ps(c+i+j1, tempC1i1);
     }
-    /*for( int i = m_a4; i < m_a; i++) {
+    for( int i = m_a4; i < m_a; i++) {
       float *ai = a+i;
 
       tempC1i1 = _mm_setzero_ps();
@@ -814,14 +1119,6 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
         tempC1i1 += _mm_mul_ps(tempA1, tempB1);
       }
       _mm_store_ss(c+i+j1, tempC1i1);
-    }*/
-    float sum;
-    for( int i = m_a4; i < m_a; i++ ) {
-      sum = 0;
-      for( int k = 0; k < n_a; k++ ) {
-        sum += *(a+i+k*m_a) * *(b+j+k*m_a);
-      }
-      *(c+i+j*m_a) = sum;
     }
   }
 }
