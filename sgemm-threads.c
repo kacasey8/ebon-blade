@@ -28,6 +28,7 @@ void *thread_function(void *thereadarg) {
   data_t *myData = (data_t *) thereadarg;
   int j_s = myData->j_start;
   int j_e = myData->j_end;
+  printf("start:%d  end:%d  diff:%d\n",j_s,j_e,j_e-j_s);
 
   for( int y = 0; y < m_b; y += BLOCKSIZE) {
     int e = MIN(m_b, y+BLOCKSIZE);
@@ -593,12 +594,35 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
   pthread_t mythread14;
   pthread_t mythread15;
   pthread_t mythread16;
-  a = A;
-  b = B;
-  c = C;
-  m_b = m_a;
+
+  pthread_t mythread17;
+
+  int m_a32 = m_a/32*32, m_diff = 0;
+  int m_a256 = m_a/256*256;
+
+  if( m_a32 != m_a256 ){ // if matrices need padding, m_a32 becomes the
+    m_a32 += 32;       // lowest multiple of 16 greater than m_a
+    m_diff = m_a32 - m_a;
+
+    a = calloc(m_a32*n_a, sizeof(float));
+    b = calloc(m_a32*n_a, sizeof(float));
+    c = malloc(m_a32*m_a32 * sizeof(float));
+
+    for( int i = 0; i < n_a; i++ ){ // moves the values of A and B into a and b
+      for( int j = 0; j < m_a; j++ ){
+        *(a + i*m_a32 + j) = *(A + i*m_a + j);
+        *(b + i*m_a32 + j) = *(B + i*m_a + j);
+      }
+    }
+  }else{
+    a = A;
+    b = B;
+    c = C;
+  }
+
+  m_b = m_a32;
   n_b = n_a;
-  int division = m_a/16;
+  int division = m_a256/16;
   int progression = 0;
   data_t *myData1 = malloc(sizeof(data_t));
   myData1->j_start = progression;
@@ -758,6 +782,17 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
     thread_api_failure();
   }
 
+  data_t *myData17;
+  if( m_diff ){
+    myData17 = malloc(sizeof(data_t));
+    myData17->j_start = progression + division;
+    myData17->j_end = m_a32;
+
+    if(pthread_create(&mythread17, NULL, thread_function, myData17)) {
+      thread_api_failure();
+    }
+  }
+
   if ( pthread_join ( mythread1, NULL ) ) {
     thread_api_failure();
   }
@@ -820,6 +855,24 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
 
   if ( pthread_join ( mythread16, NULL ) ) {
     thread_api_failure();
+  }
+
+  if( m_diff ){
+    if ( pthread_join ( mythread17, NULL ) ) {
+      thread_api_failure();
+    }
+  }
+
+  if( m_diff ){
+    free(a); // frees allocated matrices
+    free(b); // a and b don't change, so no need to move it back
+    for(int i = 0; i < m_a; i++){
+      for(int j = 0; j < m_a; j++){
+        *(C + i*m_a + j) = *(c + i*m_a32 + j);
+      }
+    }
+    free(c);
+    free(myData17);
   }
 
   free(myData1);
