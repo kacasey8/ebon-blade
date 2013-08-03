@@ -3,6 +3,8 @@
 #include <omp.h>
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
+#define BLOCKSIZE 64
+
 
 void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
 
@@ -23,11 +25,9 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
   // k, k0, k2
   // n_a, m_a4, m_a32
 
-  int blocksize = 64;
-
   #pragma omp parallel for
-  for( int y = 0; y < m_a; y += blocksize) {
-    int e = MIN(m_a32, y+blocksize);
+  for( int y = 0; y < m_a; y += BLOCKSIZE) {
+    int e = MIN(m_a32, y+BLOCKSIZE);
     __m128 tempA1, tempA2, tempA3, tempA4;
     __m128 tempA5, tempA6, tempA7, tempA8;
     __m128 tempB1;
