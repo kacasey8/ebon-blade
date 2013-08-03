@@ -999,7 +999,8 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
       }
     }
   }
-  #pragma omp parallel for
+
+#pragma omp parallel for
   for( int j = m_a16; j < m_a; j++) {
     float *bsel = b+j;
     int j1 = j*m_a;
@@ -1012,6 +1013,13 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
 
     for( int i = 0; i < m_a32; i += 32 ) {
       float *ai = a+i;
+      float *ai4 = ai + 4;
+      float *ai8 = ai4 + 4;
+      float *ai12 = ai8 + 4;
+      float *ai16 = ai12 + 4;
+      float *ai20 = ai16 + 4;
+      float *ai24 = ai20 + 4;
+      float *ai28 = ai24 + 4;
 
       tempC1i1 = _mm_setzero_ps(); // C values begin at 0 anways, so there is no use in loading
       tempC2i1 = _mm_setzero_ps(); // from C.
@@ -1028,25 +1036,25 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
         tempA1 = _mm_loadu_ps(ai+k0);
         tempC1i1 += _mm_mul_ps(tempA1, tempB1);
 
-        tempA1 = _mm_loadu_ps(ai+4+k0);
+        tempA1 = _mm_loadu_ps(ai4+k0);
         tempC2i1 += _mm_mul_ps(tempA1, tempB1);
 
-        tempA1 = _mm_loadu_ps(ai+8+k0);
+        tempA1 = _mm_loadu_ps(ai8+k0);
         tempC3i1 += _mm_mul_ps(tempA1, tempB1);
 
-        tempA1 = _mm_loadu_ps(ai+12+k0);
+        tempA1 = _mm_loadu_ps(ai12+k0);
         tempC4i1 += _mm_mul_ps(tempA1, tempB1);
 
-        tempA1 = _mm_loadu_ps(ai+16+k0);
+        tempA1 = _mm_loadu_ps(ai16+k0);
         tempC5i1 += _mm_mul_ps(tempA1, tempB1);
 
-        tempA1 = _mm_loadu_ps(ai+20+k0);
+        tempA1 = _mm_loadu_ps(ai20+k0);
         tempC6i1 += _mm_mul_ps(tempA1, tempB1);
 
-        tempA1 = _mm_loadu_ps(ai+24+k0);
+        tempA1 = _mm_loadu_ps(ai24+k0);
         tempC7i1 += _mm_mul_ps(tempA1, tempB1);
 
-        tempA1 = _mm_loadu_ps(ai+28+k0);
+        tempA1 = _mm_loadu_ps(ai28+k0);
         tempC8i1 += _mm_mul_ps(tempA1, tempB1);
 
       }
@@ -1078,13 +1086,13 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
         tempA1 = _mm_loadu_ps(ai+k0);
         tempC1i1 += _mm_mul_ps(tempA1, tempB1);
 
-        tempA1 = _mm_loadu_ps(ai+4+k0);
+        tempA1 = _mm_loadu_ps(ai4+k0);
         tempC2i1 += _mm_mul_ps(tempA1, tempB1);
 
-        tempA1 = _mm_loadu_ps(ai+8+k0);
+        tempA1 = _mm_loadu_ps(ai8+k0);
         tempC3i1 += _mm_mul_ps(tempA1, tempB1);
 
-        tempA1 = _mm_loadu_ps(ai+12+k0);
+        tempA1 = _mm_loadu_ps(ai12+k0);
         tempC4i1 += _mm_mul_ps(tempA1, tempB1);
       }
       float *ci = c+i;
