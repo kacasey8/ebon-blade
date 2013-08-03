@@ -20,7 +20,7 @@ int main( int argc, char **argv )
   for( int n = 32; n < 101; n++ )
   {
   /* Try different m */
-  for( int m = 1000; m < 10000; m = m++)
+  for( int m = 1000; m < 1001; m = m++)
   {
     /* Allocate and fill 2 random matrices A, C */
     float *A = (float*) malloc( m * n * sizeof(float) );

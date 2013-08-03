@@ -41,3 +41,8 @@ around 55 GFlop average, need a way to pad or fringe case.
 extra credit active...NO FRINGE CASES PLZ
 
 ---- extra credit implemented 7/2 ----
+
+extra credit fringe cases handled (need to work on this still)
+openmp division utilized by added an x for loop
+
+---- OPENMP FINISHED?! 7/3 ----
