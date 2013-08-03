@@ -28,7 +28,7 @@ void *thread_function(void *thereadarg) {
   data_t *myData = (data_t *) thereadarg;
   int j_s = myData->j_start;
   int j_e = myData->j_end;
-  printf("start:%d  end:%d  diff:%d\n",j_s,j_e,j_e-j_s);
+  //printf("start:%d  end:%d  diff:%d\n",j_s,j_e,j_e-j_s);
 
   for( int y = 0; y < m_b; y += BLOCKSIZE) {
     int e = MIN(m_b, y+BLOCKSIZE);
@@ -595,12 +595,12 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
   pthread_t mythread15;
   pthread_t mythread16;
 
-  pthread_t mythread17;
+//  pthread_t mythread17;
 
   int m_a32 = m_a/32*32, m_diff = 0;
   int m_a256 = m_a/256*256;
 
-  if( m_a32 != m_a256 ){ // if matrices need padding, m_a32 becomes the
+  if( m_a != m_a256 ){ // if matrices need padding, m_a32 becomes the
     m_a32 += 32;       // lowest multiple of 16 greater than m_a
     m_diff = m_a32 - m_a;
 
@@ -620,6 +620,7 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
     c = C;
   }
 
+  int counter = (m_a32-m_a256)/32;
   m_b = m_a32;
   n_b = n_a;
   int division = m_a256/16;
@@ -627,6 +628,11 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
   data_t *myData1 = malloc(sizeof(data_t));
   myData1->j_start = progression;
   myData1->j_end = progression + division;
+  if(counter){
+    myData1->j_end += 32;
+    counter--;
+    progression += 32;
+  }
 
   if(pthread_create(&mythread1, NULL, thread_function, myData1)) {
     thread_api_failure();
@@ -637,6 +643,11 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
   data_t *myData2 = malloc(sizeof(data_t));
   myData2->j_start = progression;
   myData2->j_end = progression + division;
+  if(counter){
+    myData2->j_end += 32;
+    counter--;
+    progression += 32;
+  }
 
   if(pthread_create(&mythread2, NULL, thread_function, myData2)) {
     thread_api_failure();
@@ -647,6 +658,11 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
   data_t *myData3 = malloc(sizeof(data_t));
   myData3->j_start = progression;
   myData3->j_end = progression + division;
+  if(counter){
+    myData3->j_end += 32;
+    counter--;
+    progression += 32;
+  }
 
   if(pthread_create(&mythread3, NULL, thread_function, myData3)) {
     thread_api_failure();
@@ -657,6 +673,11 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
   data_t *myData4 = malloc(sizeof(data_t));
   myData4->j_start = progression;
   myData4->j_end = progression + division;
+  if(counter){
+    myData4->j_end += 32;
+    counter--;
+    progression += 32;
+  }
 
   if(pthread_create(&mythread4, NULL, thread_function, myData4)) {
     thread_api_failure();
@@ -667,6 +688,11 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
   data_t *myData5 = malloc(sizeof(data_t));
   myData5->j_start = progression;
   myData5->j_end = progression + division;
+  if(counter){
+    myData5->j_end += 32;
+    counter--;
+    progression += 32;
+  }
 
   if(pthread_create(&mythread5, NULL, thread_function, myData5)) {
     thread_api_failure();
@@ -677,6 +703,11 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
   data_t *myData6 = malloc(sizeof(data_t));
   myData6->j_start = progression;
   myData6->j_end = progression + division;
+  if(counter){
+    myData6->j_end += 32;
+    counter--;
+    progression += 32;
+  }
 
   if(pthread_create(&mythread6, NULL, thread_function, myData6)) {
     thread_api_failure();
@@ -687,6 +718,11 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
   data_t *myData7 = malloc(sizeof(data_t));
   myData7->j_start = progression;
   myData7->j_end = progression + division;
+  if(counter){
+    myData7->j_end += 32;
+    counter--;
+    progression += 32;
+  }
 
   if(pthread_create(&mythread7, NULL, thread_function, myData7)) {
     thread_api_failure();
@@ -697,6 +733,11 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
   data_t *myData8 = malloc(sizeof(data_t));
   myData8->j_start = progression;
   myData8->j_end = progression + division;
+  if(counter){
+    myData8->j_end += 32;
+    counter--;
+    progression += 32;
+  }
 
   if(pthread_create(&mythread8, NULL, thread_function, myData8)) {
     thread_api_failure();
@@ -707,6 +748,11 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
   data_t *myData9 = malloc(sizeof(data_t));
   myData9->j_start = progression;
   myData9->j_end = progression + division;
+  if(counter){
+    myData9->j_end += 32;
+    counter--;
+    progression += 32;
+  }
 
   if(pthread_create(&mythread9, NULL, thread_function, myData9)) {
     thread_api_failure();
@@ -717,6 +763,11 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
   data_t *myData10 = malloc(sizeof(data_t));
   myData10->j_start = progression;
   myData10->j_end = progression + division;
+  if(counter){
+    myData10->j_end += 32;
+    counter--;
+    progression += 32;
+  }
 
   if(pthread_create(&mythread10, NULL, thread_function, myData10)) {
     thread_api_failure();
@@ -727,6 +778,11 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
   data_t *myData11 = malloc(sizeof(data_t));
   myData11->j_start = progression;
   myData11->j_end = progression + division;
+  if(counter){
+    myData11->j_end += 32;
+    counter--;
+    progression += 32;
+  }
 
   if(pthread_create(&mythread11, NULL, thread_function, myData11)) {
     thread_api_failure();
@@ -737,6 +793,11 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
   data_t *myData12 = malloc(sizeof(data_t));
   myData12->j_start = progression;
   myData12->j_end = progression + division;
+  if(counter){
+    myData12->j_end += 32;
+    counter--;
+    progression += 32;
+  }
 
   if(pthread_create(&mythread12, NULL, thread_function, myData12)) {
     thread_api_failure();
@@ -747,6 +808,11 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
   data_t *myData13 = malloc(sizeof(data_t));
   myData13->j_start = progression;
   myData13->j_end = progression + division;
+  if(counter){
+    myData13->j_end += 32;
+    counter--;
+    progression += 32;
+  }
 
   if(pthread_create(&mythread13, NULL, thread_function, myData13)) {
     thread_api_failure();
@@ -757,6 +823,11 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
   data_t *myData14 = malloc(sizeof(data_t));
   myData14->j_start = progression;
   myData14->j_end = progression + division;
+  if(counter){
+    myData14->j_end += 32;
+    counter--;
+    progression += 32;
+  }
 
   if(pthread_create(&mythread14, NULL, thread_function, myData14)) {
     thread_api_failure();
@@ -767,6 +838,11 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
   data_t *myData15 = malloc(sizeof(data_t));
   myData15->j_start = progression;
   myData15->j_end = progression + division;
+  if(counter){
+    myData15->j_end += 32;
+    counter--;
+    progression += 32;
+  }
 
   if(pthread_create(&mythread15, NULL, thread_function, myData15)) {
     thread_api_failure();
@@ -777,11 +853,17 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
   data_t *myData16 = malloc(sizeof(data_t));
   myData16->j_start = progression;
   myData16->j_end = progression + division;
+  if(counter){
+    myData16->j_end += 32;
+    counter--;
+    progression += 32;
+  }
 
   if(pthread_create(&mythread16, NULL, thread_function, myData16)) {
     thread_api_failure();
   }
 
+  /*
   data_t *myData17;
   if( m_diff ){
     myData17 = malloc(sizeof(data_t));
@@ -792,6 +874,7 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
       thread_api_failure();
     }
   }
+  */
 
   if ( pthread_join ( mythread1, NULL ) ) {
     thread_api_failure();
@@ -857,11 +940,13 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
     thread_api_failure();
   }
 
+  /*
   if( m_diff ){
     if ( pthread_join ( mythread17, NULL ) ) {
       thread_api_failure();
     }
   }
+  */
 
   if( m_diff ){
     free(a); // frees allocated matrices
@@ -872,7 +957,7 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
       }
     }
     free(c);
-    free(myData17);
+    //free(myData17);
   }
 
   free(myData1);
