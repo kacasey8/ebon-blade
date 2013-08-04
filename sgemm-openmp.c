@@ -29,8 +29,8 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
 
   __m128 zero = _mm_setzero_ps();
   #pragma omp parallel for
-  for( int x = 0; x < m_a; x += 16) {
-    int d = MIN(m_a16, x + 16);
+  for( int x = 0; x < m_a; x += BLOCK2) {
+    int d = MIN(m_a16, x + BLOCK2);
     int j;
     __m128 tempA1, tempA2, tempA3, tempA4;
     __m128 tempA5, tempA6, tempA7, tempA8;
