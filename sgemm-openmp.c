@@ -2,35 +2,23 @@
 #include <stdio.h>
 #include <omp.h>
 
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
-#define BLOCK 64
-#define BLOCK2 16
+#define MIN(a,b) ((a) < (b) ? (a) : (b)) // A cool function that returns the minimum value given two values
+#define BLOCK 64 // blocking i by 64
+#define BLOCK2 16 // blocking j by 16, mainly to properly parallelize
 
 
 void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
 
-  float *a, *b, *c;
-  a = A;
-  b = B;
-  c = C;
+  float *a = A, *b = B, *c = C; // A fragment of a memory from when we attempted padding.
 
-  int m_a4 = m_a/4*4;
+  int m_a4 = m_a/4*4;     // quick references to certain truncated values of m_a
   int m_a16 = m_a/16*16;
   int m_a32 = m_a/32*32;
 
-//  int m_a64 = m_a/64*64;
-
-  // e, y
-  // j, b, bsel
-  // j0, j1, j2, j3
-  // i, a, ai, c, ci
-  // k, k0, k2
-  // n_a, m_a4, m_a32
-
-  __m128 zero = _mm_setzero_ps();
+  __m128 zero = _mm_setzero_ps(); // a reference to the 0 value, appears to copy by value when used
   #pragma omp parallel for
   for( int x = 0; x < m_a; x += BLOCK2) {
-    int d = MIN(m_a16, x + BLOCK2);
+    int d = MIN(m_a16, x + BLOCK2); // grabs the size of the block to use, either a block of 16 or up to the end of the array
     int j;
     __m128 tempA1, tempA2, tempA3, tempA4;
     __m128 tempA5, tempA6, tempA7, tempA8;
@@ -68,8 +56,8 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
     __m128 tempC9i8, tempC10i8, tempC11i8, tempC12i8;
     __m128 tempC13i8, tempC14i8, tempC15i8, tempC16i8;
     for( int y = 0; y < m_a; y += BLOCK) {
-      int e = MIN(m_a32, y+BLOCK);
-      for(j = x; j < d; j += 16) {
+      int e = MIN(m_a32, y+BLOCK); // grabs the size of the block to use, either a block of 32 or up to the end of the array
+      for(j = x; j < d; j += 16) { // traverse j by 16
         float *bsel = b + j;
         int j1 = j*m_a;
         int j2 = j1 + m_a;
@@ -87,7 +75,7 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
         int j14 = j13 + m_a;
         int j15 = j14 + m_a;
         int j16 = j15 + m_a;
-        for( int i = y; i < e; i += 32 ) {
+        for( int i = y; i < e; i += 32 ) { // traverse i by 32 at a time
           float *ai = a + i;
           float *ai4 = ai + 4;
           float *ai8 = ai4 + 4;
@@ -233,11 +221,11 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
           tempC15i8 = zero; 
           tempC16i8 = zero; 
 
-          for( int k = 0; k < n_a; k++ ) {
-            int k0 = k*m_a ;
+          int k0 = 0;
 
-            tempA1 = _mm_loadu_ps(ai+k0); 
-            tempA2 = _mm_loadu_ps(ai4+k0); 
+          for( int k = 0; k < n_a; k++ ) {
+            tempA1 = _mm_loadu_ps(ai+k0);   // load up the 8 A values we will be using
+            tempA2 = _mm_loadu_ps(ai4+k0);  // these registers will abuse register blocking
             tempA3 = _mm_loadu_ps(ai8+k0); 
             tempA4 = _mm_loadu_ps(ai12+k0); 
             tempA5 = _mm_loadu_ps(ai16+k0); 
@@ -245,9 +233,9 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
             tempA7 = _mm_loadu_ps(ai24+k0); 
             tempA8 = _mm_loadu_ps(ai28+k0); 
 
-            tempB1 = _mm_load1_ps(bsel+k0); 
+            tempB1 = _mm_load1_ps(bsel+k0);  // load up one B value we will use with each A
 
-            tempC1i1 += _mm_mul_ps(tempA1, tempB1);
+            tempC1i1 += _mm_mul_ps(tempA1, tempB1); // store the set up multiplying
             tempC1i2 += _mm_mul_ps(tempA2, tempB1);
             tempC1i3 += _mm_mul_ps(tempA3, tempB1);
             tempC1i4 += _mm_mul_ps(tempA4, tempB1);
@@ -256,9 +244,9 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
             tempC1i7 += _mm_mul_ps(tempA7, tempB1);
             tempC1i8 += _mm_mul_ps(tempA8, tempB1);
 
-            tempB1 = _mm_load1_ps(bsel+1+k0);
+            tempB1 = _mm_load1_ps(bsel+1+k0); // use a new B value
 
-            tempC2i1 += _mm_mul_ps(tempA1, tempB1);
+            tempC2i1 += _mm_mul_ps(tempA1, tempB1); // and store into another level of tempC
             tempC2i2 += _mm_mul_ps(tempA2, tempB1);
             tempC2i3 += _mm_mul_ps(tempA3, tempB1);
             tempC2i4 += _mm_mul_ps(tempA4, tempB1);
@@ -420,11 +408,13 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
             tempC16i6 += _mm_mul_ps(tempA6, tempB1);
             tempC16i7 += _mm_mul_ps(tempA7, tempB1);
             tempC16i8 += _mm_mul_ps(tempA8, tempB1);
+
+            k0 += m_a; // setup k0 for next iteration
           }
 
           float *ci = c + i;
 
-          _mm_storeu_ps(ci+j1, tempC1i1);
+          _mm_storeu_ps(ci+j1, tempC1i1); // store each level
           _mm_storeu_ps(ci+j2, tempC2i1);
           _mm_storeu_ps(ci+j3, tempC3i1);
           _mm_storeu_ps(ci+j4, tempC4i1);
@@ -442,9 +432,9 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
           _mm_storeu_ps(ci+j16, tempC16i1);
 
 
-          ci += 4;
+          ci += 4; // modify the pointer for easy storing
 
-          _mm_storeu_ps(ci+j1, tempC1i2);
+          _mm_storeu_ps(ci+j1, tempC1i2); // store next level
           _mm_storeu_ps(ci+j2, tempC2i2);
           _mm_storeu_ps(ci+j3, tempC3i2);
           _mm_storeu_ps(ci+j4, tempC4i2);
@@ -576,8 +566,8 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
           _mm_storeu_ps(ci+j16, tempC16i8);
         }
       }
-      if(j == m_a16) {
-        for(int j = m_a16; j < m_a4; j += 4) {
+      if(j == m_a16) { // edge case, covers when m_a is not a multiple of 16 for the j loop, calculates up to 15 right columns of C
+        for(int j = m_a16; j < m_a4; j += 4) { // same logic as before, traverse by only 4 for j this time.
           float *bsel = b + j;
           int j1 = j*m_a;
           int j2 = j1 + m_a;
@@ -748,7 +738,7 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
           }
         }
 
-        for(int j = m_a4; j < m_a; j++) {
+        for(int j = m_a4; j < m_a; j++) { // same logic as before, traverse j by only 1 this time, hit last columns of C
           float *bsel = b + j;
           int j1 = j*m_a;
           for( int i = y; i < e; i += 32 ) {
@@ -838,8 +828,9 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
     }
   }
 
+  // edge case, covers when m_a is not a multiple of 32 for the i loop, calculates up to 31 bottom rows of C
   #pragma omp parallel for
-  for( int j = 0; j < m_a4; j += 4) {
+  for( int j = 0; j < m_a4; j += 4) { // traverse j at a smaller rate, to avoid massive fringe casing
     float *bsel = b+j;
     int j1 = j*m_a;
     int j2 = j1 + m_a;
@@ -853,7 +844,7 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
     __m128 tempC1i3, tempC2i3, tempC3i3, tempC4i3;
     __m128 tempC1i4, tempC2i4, tempC3i4, tempC4i4;
 
-    for( int i = m_a32; i < m_a16; i += 16) {
+    for( int i = m_a32; i < m_a16; i += 16) { // try hitting the last 16 rows if not calcualted yet.
       float *ai = a+i;
       float *ai4 = ai + 4;
       float *ai8 = ai4 + 4;
@@ -943,7 +934,7 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
       _mm_storeu_ps(ci+j4, tempC4i4);
 
     }
-    for( int i = m_a16; i < m_a4; i += 4) {
+    for( int i = m_a16; i < m_a4; i += 4) { // try hitting the last groups of 4 rows of C if they aren't hit yet
       float *ai = a+i;
 
       tempC1i1 = zero;
@@ -971,7 +962,7 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
       _mm_storeu_ps(c+i+j3, tempC3i1);
       _mm_storeu_ps(c+i+j4, tempC4i1);
     }
-    for( int i = m_a4; i < m_a; i++) {
+    for( int i = m_a4; i < m_a; i++) { // hit up to last 3 rows of C if they aren't hit yet
       float *ai = a+i;
 
       tempC1i1 = zero;
@@ -1000,8 +991,7 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
       _mm_store_ss(c+i+j4, tempC4i1);
     }
   }
-  //#pragma omp parallel for
-  for( int j = m_a4; j < m_a; j++) {
+  for( int j = m_a4; j < m_a; j++) { // traverse j by 1. This allows us to get the bottom right corner of C calculated
     float *bsel = b+j;
     int j1 = j*m_a;
 
@@ -1009,7 +999,7 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
     __m128 tempB1;
     __m128 tempC1i1, tempC2i1, tempC3i1, tempC4i1;
 
-    for( int i = m_a32; i < m_a16; i += 16) {
+    for( int i = m_a32; i < m_a16; i += 16) { // try hitting the last 16 rows if not calcualted yet.
       float *ai = a+i;
       float *ai4 = ai + 4;
       float *ai8 = ai4 + 4;
@@ -1042,7 +1032,7 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
       _mm_storeu_ps(ci+8+j1, tempC3i1);
       _mm_storeu_ps(ci+12+j1, tempC4i1);
     }
-    for( int i = m_a16; i < m_a4; i += 4) {
+    for( int i = m_a16; i < m_a4; i += 4) { // try hitting the last 4 rows if not calcualted yet.
       float *ai = a+i;
 
       tempC1i1 = zero;
@@ -1055,7 +1045,7 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
       }
       _mm_storeu_ps(c+i+j1, tempC1i1);
     }
-    for( int i = m_a4; i < m_a; i++) {
+    for( int i = m_a4; i < m_a; i++) { // hit the very last corner...looks like array is completed
       float *ai = a+i;
 
       tempC1i1 = zero;
