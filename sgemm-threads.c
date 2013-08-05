@@ -6,16 +6,21 @@
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define BLOCK 64
 
-float *a;
-float *b;
-float *c;
-int m_b, m_b4, m_b16, m_b32;
-int n_b;
+float *a; // global variable for A matrix
+float *b; // global variable for B matrix
+float *c; // global variable for C matrix
+int m_b, m_b4, m_b16, m_b32; // m_b# represents the closest multiple of # less than m_b
+int n_b; // global variable for n_a
 
 void thread_api_failure(void) {
     printf("Pthreads API function returned nonzero status!\n");
     exit(-1);
 }
+
+/**
+ *  Simple data structure to pass into the functions how much of the B matrix
+ *  to traverse.
+ **/
 
 struct thread_data {
     int j_start;
@@ -24,13 +29,26 @@ struct thread_data {
 
 typedef struct thread_data data_t;
 
+/**
+ *  Our threads code is essentially the same as in openmp, except we manually
+ *  create threads when before we would have used openmp pragmas. Because our
+ *  original openmp code has 2 sections that are individually parallelize as
+ *  well as a "leftovers" section, we need three different functions to allow
+ *  multiple threads to run on each section of the matrices.
+ *
+ *  The main_thread divides up the work from i = [0,m_b256], jumping by 32
+ *  The fringe_thread handles cases from i = [m_b32, m_b16], jumping by 16
+ *  the leftovers_thread handles cases from i = [m_b16, m_b], jumping by 1
+ *
+ *  Each thread takes approximately 1/16 of B and traverses through all of A.
+ **/
+
 void *sgemm_main_thread(void *thereadarg) {
   data_t *myData = (data_t *) thereadarg;
   int j_s = myData->j_start;
   int j_e = myData->j_end;
-  //printf("main start:%d  end:%d  diff:%d\n",j_s,j_e,j_e-j_s);
 
-  __m128 zero = _mm_setzero_ps();
+  __m128 zero = _mm_setzero_ps(); // variable for sanity.
 
   __m128 tempA1, tempA2, tempA3, tempA4;
   __m128 tempA5, tempA6, tempA7, tempA8;
@@ -845,7 +863,6 @@ void *sgemm_fringe_thread(void *thereadarg) {
   data_t *myData = (data_t *) thereadarg;
   int j_s = myData->j_start;
   int j_e = myData->j_end;
-  //printf("fringe start:%d  end:%d  diff:%d\n",j_s,j_e,j_e-j_s);
 
   __m128 zero = _mm_setzero_ps();
 
@@ -1090,6 +1107,12 @@ void *sgemm_leftover_thread(void *thereadarg) {
   }
 }
 
+/**
+ *  We create 16 threads for each of the chunks of code which used to have
+ *  pragmas, as well as one thread for the leftovers case, making a total of
+ *  33 threads.
+ **/
+
 void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
   pthread_t mythread1;
   pthread_t mythread2;
@@ -1137,17 +1160,17 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
   b = B;
   c = C;
 
-  int division = m_b256/16;
-  int counter1 = (m_b16-m_b256)/16;
-  int counter2 = (m_b16-m_b64)/4;
+  int division = m_b256/16; // Splits B matrix into 16 different sections
+  int counter1 = (m_b16-m_b256)/16; // Counter that distributes parts of B<m_b16 but greater than m_b256
+  int counter2 = (m_b16-m_b64)/4; // Does the same thing for m_b16
 
-  int progression = 0;
+  int progression = 0; // Counter that shows how much of the B matrix has been assigned to a thread already.
 
   data_t *myData1 = malloc(sizeof(data_t));
   myData1->j_start = progression;
   myData1->j_end = progression + division;
-  if(counter1){
-    myData1->j_end += 16;
+  if(counter1){ // if counter is not 0, then you need to assign more of the matrix to the thread in order
+    myData1->j_end += 16; //to traverse through all of B by the end.
     counter1--;
     progression += 16;
   }
@@ -1778,7 +1801,7 @@ void sgemm( int m_a, int n_a, float *A, float *B, float *C ) {
     thread_api_failure();
   }
 
-
+  //Clean up
   free(myData1);
   free(myData2);
   free(myData3);
